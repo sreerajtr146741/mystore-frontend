@@ -96,7 +96,7 @@ $blade = new Blade($views, $cache);
 
 // REGISTER .php AS BLADE TEMPLATE
 // This is critical because the existing files are .php but contain Blade syntax
-$blade->view()->addExtension('php', 'blade');
+$blade->addExtension('php', 'blade');
 
 // --------------------------------------------------------------------------
 // ROUTER
