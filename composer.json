@@ -1,0 +1,12 @@
+{
+    "name": "mystore/frontend",
+    "description": "MyStore Frontend",
+    "require": {
+        "jenssegers/blade": "^1.4"
+    },
+    "config": {
+        "allow-plugins": {
+            "kylekatarnls/update-helper": true
+        }
+    }
+}

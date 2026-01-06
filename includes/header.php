@@ -1,3 +1,0 @@
-<?php
-// Header file
-?>
