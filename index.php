@@ -3,6 +3,7 @@ require __DIR__ . '/vendor/autoload.php';
 
 use Jenssegers\Blade\Blade;
 use Illuminate\Support\MessageBag;
+use Carbon\Carbon;
 
 // --------------------------------------------------------------------------
 // MOCK LARAVEL HELPERS
@@ -137,9 +138,10 @@ $data = [
         'low_stock' => 2
     ],
     'sellerProducts' => [
-        (object)['id'=>1, 'name'=>'Wireless Headphones', 'price'=>2999, 'stock'=>50, 'updated_at'=>new DateTime('-1 day')],
-        (object)['id'=>2, 'name'=>'Smart Watch', 'price'=>4500, 'stock'=>12, 'updated_at'=>new DateTime('-2 hours')],
-        (object)['id'=>3, 'name'=>'Gaming Mouse', 'price'=>1200, 'stock'=>4, 'updated_at'=>new DateTime('-5 mins')],
+
+        (object)['id'=>1, 'name'=>'Wireless Headphones', 'price'=>2999, 'stock'=>50, 'updated_at'=>Carbon::now()->subDay()],
+        (object)['id'=>2, 'name'=>'Smart Watch', 'price'=>4500, 'stock'=>12, 'updated_at'=>Carbon::now()->subHours(2)],
+        (object)['id'=>3, 'name'=>'Gaming Mouse', 'price'=>1200, 'stock'=>4, 'updated_at'=>Carbon::now()->subMinutes(5)],
     ],
     'errors' => new MessageBag(),
 ];
