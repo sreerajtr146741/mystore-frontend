@@ -3,6 +3,7 @@ require __DIR__ . '/vendor/autoload.php';
 
 use Jenssegers\Blade\Blade;
 use Illuminate\Support\MessageBag;
+use Illuminate\Support\ViewErrorBag;
 use Carbon\Carbon;
 
 // --------------------------------------------------------------------------
@@ -255,7 +256,7 @@ $data = [
         'total' => 0,
         'count' => 0
     ],
-    'errors' => new MessageBag(),
+    'errors' => new ViewErrorBag(),
 ];
 
 // Check if view exists and render
