@@ -96,6 +96,66 @@ if (!function_exists('old')) {
     function old($key, $default = null) { return $default; }
 }
 
+if (!function_exists('request')) {
+    class MockRequest {
+        public function __construct() {
+            $this->uri = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH);
+            $this->query = $_GET;
+            $this->method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
+        }
+        
+        public function routeIs($routeName) {
+            // Simple route matching based on current URI
+            $currentPath = trim($this->uri, '/');
+            
+            // Map route names to paths
+            $routeMap = [
+                'products.index' => 'products',
+                'about' => 'about',
+                'contact' => 'contact',
+                'cart.index' => 'cart',
+                'checkout.index' => 'checkout',
+                'orders.index' => 'orders',
+                'login' => 'login',
+                'register' => 'register',
+            ];
+            
+            $expectedPath = $routeMap[$routeName] ?? str_replace('.', '/', $routeName);
+            return $currentPath === $expectedPath || $currentPath === 'auth/' . $expectedPath;
+        }
+        
+        public function get($key, $default = null) {
+            return $this->query[$key] ?? $default;
+        }
+        
+        public function has($key) {
+            return isset($this->query[$key]);
+        }
+        
+        public function except($keys) {
+            $keys = is_array($keys) ? $keys : [$keys];
+            return array_diff_key($this->query, array_flip($keys));
+        }
+        
+        public function only($keys) {
+            $keys = is_array($keys) ? $keys : [$keys];
+            return array_intersect_key($this->query, array_flip($keys));
+        }
+        
+        public function all() {
+            return $this->query;
+        }
+    }
+    
+    function request() {
+        static $request = null;
+        if ($request === null) {
+            $request = new MockRequest();
+        }
+        return $request;
+    }
+}
+
 // --------------------------------------------------------------------------
 // BLADE SETUP
 // --------------------------------------------------------------------------
