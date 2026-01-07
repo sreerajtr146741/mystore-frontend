@@ -31,11 +31,25 @@ if (!function_exists('auth')) {
 
 if (!function_exists('route')) {
     function route($name, $params = []) {
-        // Return a dummy URL mapping. 
-        // For a perfectly working app, we'd need a full route map.
-        // For this demo, we can assume routes map to view paths.
-        if ($name == 'logout') return '#?action=logout';
-        if ($name == 'profile.edit') return '/profile/edit';
+        // Common route mappings
+        $routes = [
+            'logout' => '#?action=logout',
+            'profile.edit' => '/profile/edit',
+            'login' => '/login',
+            'register' => '/register',
+            'admin.login' => '/admin-login',
+            'cart.index' => '/cart',
+            'checkout.index' => '/checkout',
+            'orders.index' => '/orders',
+            'products.index' => '/products',
+            'home' => '/',
+            'dashboard' => '/dashboard',
+        ];
+        
+        // Return mapped route if exists
+        if (isset($routes[$name])) {
+            return $routes[$name];
+        }
         
         // Convert k.b to k/b
         return '/' . str_replace('.', '/', $name);
@@ -107,9 +121,24 @@ $uri = urldecode(
     parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH)
 );
 
+// Route Aliases - Map friendly URLs to actual view paths
+$routeAliases = [
+    '/login' => 'auth.login',
+    '/register' => 'auth.register',
+    '/admin-login' => 'auth.admin-login',
+    '/forgot-password' => 'auth.forgot-password',
+    '/cart' => 'cart.index',
+    '/checkout' => 'checkout.index',
+    '/orders' => 'orders.index',
+    '/dashboard' => 'layouts.index',
+];
+
 // Default Route
 if ($uri === '/' || $uri === '/index.php') {
     $viewName = 'layouts.index';
+} elseif (isset($routeAliases[$uri])) {
+    // Use alias if defined
+    $viewName = $routeAliases[$uri];
 } else {
     // Convert URI to view path
     // e.g. /profile/edit -> profile.edit
