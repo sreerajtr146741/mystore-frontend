@@ -117,9 +117,19 @@ if ($uri === '/' || $uri === '/index.php') {
     $path = str_replace('.php', '', $path);
     $viewName = str_replace('/', '.', $path);
     
-    // Add 'index' if directory
-    if (is_dir($views . '/' . $path)) {
+    // Check if it's a directory with an index file
+    $dirPath = $views . '/' . str_replace('.', '/', $viewName);
+    $filePath = $views . '/' . str_replace('.', '/', $viewName) . '.php';
+    
+    if (is_dir($dirPath) && file_exists($dirPath . '/index.php')) {
         $viewName .= '.index';
+    } elseif (!file_exists($filePath)) {
+        // If direct file doesn't exist, try adding .index
+        if (file_exists($dirPath . '.php')) {
+            // File exists as-is, keep viewName
+        } elseif (is_dir($dirPath) && file_exists($dirPath . '/index.php')) {
+            $viewName .= '.index';
+        }
     }
 }
 
@@ -138,10 +148,83 @@ $data = [
         'low_stock' => 2
     ],
     'sellerProducts' => [
-
         (object)['id'=>1, 'name'=>'Wireless Headphones', 'price'=>2999, 'stock'=>50, 'updated_at'=>Carbon::now()->subDay()],
         (object)['id'=>2, 'name'=>'Smart Watch', 'price'=>4500, 'stock'=>12, 'updated_at'=>Carbon::now()->subHours(2)],
         (object)['id'=>3, 'name'=>'Gaming Mouse', 'price'=>1200, 'stock'=>4, 'updated_at'=>Carbon::now()->subMinutes(5)],
+    ],
+    // Customer-facing product data
+    'products' => [
+        (object)[
+            'id'=>1, 
+            'name'=>'Wireless Headphones', 
+            'description'=>'Premium noise-cancelling wireless headphones with 30-hour battery life',
+            'price'=>2999, 
+            'stock'=>50, 
+            'category'=>'Electronics',
+            'image'=>'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400',
+            'created_at'=>Carbon::now()->subDays(10)
+        ],
+        (object)[
+            'id'=>2, 
+            'name'=>'Smart Watch', 
+            'description'=>'Fitness tracking smartwatch with heart rate monitor and GPS',
+            'price'=>4500, 
+            'stock'=>12, 
+            'category'=>'Electronics',
+            'image'=>'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=400',
+            'created_at'=>Carbon::now()->subDays(8)
+        ],
+        (object)[
+            'id'=>3, 
+            'name'=>'Gaming Mouse', 
+            'description'=>'High-precision gaming mouse with RGB lighting and programmable buttons',
+            'price'=>1200, 
+            'stock'=>25, 
+            'category'=>'Electronics',
+            'image'=>'https://images.unsplash.com/photo-1527814050087-3793815479db?w=400',
+            'created_at'=>Carbon::now()->subDays(5)
+        ],
+        (object)[
+            'id'=>4, 
+            'name'=>'Laptop Backpack', 
+            'description'=>'Durable laptop backpack with multiple compartments and USB charging port',
+            'price'=>1899, 
+            'stock'=>30, 
+            'category'=>'Accessories',
+            'image'=>'https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=400',
+            'created_at'=>Carbon::now()->subDays(3)
+        ],
+        (object)[
+            'id'=>5, 
+            'name'=>'Mechanical Keyboard', 
+            'description'=>'RGB mechanical keyboard with blue switches for gaming and typing',
+            'price'=>3499, 
+            'stock'=>18, 
+            'category'=>'Electronics',
+            'image'=>'https://images.unsplash.com/photo-1587829741301-dc798b83add3?w=400',
+            'created_at'=>Carbon::now()->subDays(2)
+        ],
+        (object)[
+            'id'=>6, 
+            'name'=>'Portable Charger', 
+            'description'=>'20000mAh portable power bank with fast charging support',
+            'price'=>999, 
+            'stock'=>45, 
+            'category'=>'Accessories',
+            'image'=>'https://images.unsplash.com/photo-1609091839311-d5365f9ff1c5?w=400',
+            'created_at'=>Carbon::now()->subDay()
+        ],
+    ],
+    'categories' => [
+        (object)['id'=>1, 'name'=>'Electronics', 'slug'=>'electronics'],
+        (object)['id'=>2, 'name'=>'Accessories', 'slug'=>'accessories'],
+        (object)['id'=>3, 'name'=>'Fashion', 'slug'=>'fashion'],
+        (object)['id'=>4, 'name'=>'Home & Living', 'slug'=>'home-living'],
+    ],
+    'cart' => [
+        'items' => [],
+        'total' => 0,
+        'count' => 0
     ],
     'errors' => new MessageBag(),
 ];

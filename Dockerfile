@@ -36,4 +36,7 @@ RUN chown -R www-data:www-data /var/www/html \
 # But ensure AllowOverride is set for .htaccess if needed (though we use index.php router)
 RUN sed -i 's/AllowOverride None/AllowOverride All/' /etc/apache2/apache2.conf
 
+# Set ServerName to suppress warning
+RUN echo "ServerName buyorix.onrender.com" >> /etc/apache2/apache2.conf
+
 EXPOSE 80
