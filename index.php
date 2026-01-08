@@ -44,7 +44,11 @@ if (!function_exists('auth')) {
 }
 if (!function_exists('request')) {
     function request($key = null, $default = null) {
-        if ($key === null) return new class { public function all(){ return $_GET; } public function has($k){ return isset($_GET[$k]); } };
+        if ($key === null) return new class { 
+            public function all(){ return $_GET; } 
+            public function has($k){ return isset($_GET[$k]); }
+            public function ajax() { return isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest'; }
+        };
         return $_GET[$key] ?? $default;
     }
 }
