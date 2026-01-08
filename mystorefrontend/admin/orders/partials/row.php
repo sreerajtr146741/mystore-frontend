@@ -31,20 +31,29 @@
         </td>
         <td class="py-4">
             <div class="d-flex flex-column gap-1">
+                @php
+                    $createdAt = optional($order->created_at ?? null);
+                    if(!($createdAt instanceof \Carbon\Carbon) && $createdAt) try { $createdAt = \Carbon\Carbon::parse($createdAt); } catch(\Exception $e){}
+                    
+                    $updatedAt = optional($order->updated_at ?? null);
+                    if(!($updatedAt instanceof \Carbon\Carbon) && $updatedAt) try { $updatedAt = \Carbon\Carbon::parse($updatedAt); } catch(\Exception $e){}
+                @endphp
+                
                 <div class="small text-white-50 d-flex align-items-center gap-2">
-                    <i class="bi bi-calendar-event text-info"></i> Placed: {{ $order->created_at->format('M d, Y') }}
+                    <i class="bi bi-calendar-event text-info"></i> Placed: {{ $createdAt->format('M d, Y') ?? 'N/A' }}
                 </div>
-                @if($order->status == 'delivered')
+                
+                @if($updatedAt && $order->status == 'delivered')
                     <div class="small text-success fw-bold d-flex align-items-center gap-2">
-                        <i class="bi bi-check-all"></i> Completed: {{ $order->updated_at->format('M d') }}
+                        <i class="bi bi-check-all"></i> Completed: {{ $updatedAt->format('M d') }}
                     </div>
-                @elseif($order->status == 'shipped')
+                @elseif($updatedAt && $order->status == 'shipped')
                     <div class="small text-primary-emphasis fw-bold d-flex align-items-center gap-2" style="color: #38bdf8 !important;">
-                        <i class="bi bi-truck"></i> Shipped: {{ $order->updated_at->format('M d') }}
+                        <i class="bi bi-truck"></i> Shipped: {{ $updatedAt->format('M d') }}
                     </div>
-                @elseif($order->status == 'processing')
+                @elseif($updatedAt && $order->status == 'processing')
                     <div class="small text-warning-emphasis fw-bold d-flex align-items-center gap-2" style="color: #fbbf24 !important;">
-                        <i class="bi bi-gear-fill"></i> Processing: {{ $order->updated_at->format('M d') }}
+                        <i class="bi bi-gear-fill"></i> Processing: {{ $updatedAt->format('M d') }}
                     </div>
                 @endif
             </div>

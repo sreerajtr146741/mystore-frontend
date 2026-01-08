@@ -8,7 +8,6 @@
 @endphp
 @forelse($products as $p)
 @php
-@php
     $img = $resolveImg($p->image ?? null);
     $status = $p->status ?? 'active';
     $isActiveProp = $p->is_active ?? 1;
