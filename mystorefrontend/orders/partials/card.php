@@ -105,7 +105,11 @@
                             @endif
 
                             @php
-                                $daysSinceDelivery = $order->updated_at->diffInDays(now());
+                                $updatedAt = $order->updated_at ?? now();
+                                if (!$updatedAt instanceof \Carbon\Carbon) {
+                                     try { $updatedAt = \Carbon\Carbon::parse($updatedAt); } catch (\Exception $e) { $updatedAt = now(); }
+                                }
+                                $daysSinceDelivery = $updatedAt ? $updatedAt->diffInDays(now()) : 0;
                                 $canReturn = $daysSinceDelivery <= 7;
                             @endphp
 

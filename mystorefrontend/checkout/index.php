@@ -207,6 +207,7 @@
                                     } elseif (filter_var($imagePath, FILTER_VALIDATE_URL)) {
                                         $imageUrl = $imagePath;
                                     } else {
+                                        // Ensure leading slash for local storage
                                         $imageUrl = asset('storage/' . ltrim($imagePath, '/'));
                                     }
                                 @endphp

@@ -53,11 +53,7 @@
                     <small class="text-danger fw-bold"><i class="bi bi-x-circle-fill me-1"></i> Out of Stock</small>
                 @endif
                 
-                <button class="btn btn-sm btn-outline-primary rounded-circle shadow-sm p-2 lh-1 stop-click" 
-                        onclick="event.stopPropagation(); location.href='{{ route('cart.add', ['id' => $id]) }}'"
-                        title="Add to Cart">
-                    <i class="bi bi-bag-plus-fill"></i>
-                </button>
+                {{-- Button removed as requested --}}
             </div>
         </div>
     </div>
