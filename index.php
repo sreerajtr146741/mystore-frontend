@@ -266,8 +266,52 @@ if ($uri === '/' || $uri === '/products' || $uri === '/index.php') {
          $data['messages'] = collect($res->data ?? []);
     } else {
         $viewName = 'admin.dashboard';
-        // Dashboard Stats
-        $data['stats'] = ['total_users'=>0, 'total_products'=>0, 'total_revenue'=>0]; // Defaults
+        
+        // Fetch fresh data for stats
+        $usersRes = api_client('admin/users');
+        $prodsRes = api_client('products');
+        $ordersRes = api_client('admin/orders'); // Requires Auth
+        $msgsRes = api_client('admin/messages');
+        
+        $users = collect($usersRes->data ?? []);
+        $products = collect($prodsRes->data ?? []);
+        $orders = collect($ordersRes->data ?? []);
+        $messages = collect($msgsRes->data ?? []);
+        
+        // Calculate Stats
+        $totalRevenue = $orders->where('status', '!=', 'cancelled')->sum('total');
+        $pendingOrders = $orders->where('status', 'pending')->count();
+        $pendingMessages = $messages->count(); // Assuming all fetched are relevant or add filtered check
+        
+        $data['stats'] = [
+            'total_users' => $users->count(),
+            'total_products' => $products->count(),
+            'new_today' => $products->where('created_at', '>=', date('Y-m-d'))->count(),
+            'total_revenue' => $totalRevenue,
+            'suspended_users' => $users->where('status', 'suspended')->count(),
+            'blocked_users' => $users->where('status', 'blocked')->count()
+        ];
+        
+        $data['userStats'] = [
+            'buyers' => $users->where('role', 'buyer')->count(),
+            'sellers' => $users->where('role', 'seller')->count(),
+            'admins' => $users->where('role', 'admin')->count(),
+            'new_today' => $users->where('created_at', '>=', date('Y-m-d'))->count(),
+            'active_30d' => $users->count() // Mock active metric for now
+        ];
+        
+        $data['adminExtras'] = [
+            'pending_orders' => $pendingOrders,
+            'pending_messages' => $pendingMessages
+        ];
+        
+        // Revenue Chart Mock Data (or calculate if orders have dates)
+        $data['revenue'] = ['growth' => '+10%'];
+        $data['monthlyRevenue'] = [
+            ['month'=>'Jan', 'revenue'=>5000],
+            ['month'=>'Feb', 'revenue'=>7000], 
+            // In a real app, group $orders by month
+        ];
     }
 }
 
