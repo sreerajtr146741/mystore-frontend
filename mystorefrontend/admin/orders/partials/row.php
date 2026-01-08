@@ -13,7 +13,7 @@
                     <div class="d-flex gap-1 mt-2">
                         @foreach($order->items->take(4) as $item)
                             @if($item->product && $item->product->image)
-                                <img src="{{ asset('storage/'.$item->product->image) }}" 
+                                <img src="{{ backend_img($item->product->image) }}" 
                                         alt="img" 
                                         class="rounded-2 border border-white border-opacity-20 shadow-sm"
                                         style="width: 28px; height: 28px; object-fit: cover;"

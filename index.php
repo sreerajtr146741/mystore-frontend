@@ -1,369 +1,292 @@
 <?php
 require __DIR__ . '/vendor/autoload.php';
+require __DIR__ . '/config.php';
+require __DIR__ . '/api_helper.php';
 
 use Jenssegers\Blade\Blade;
 use Illuminate\Support\MessageBag;
 use Illuminate\Support\ViewErrorBag;
-use Carbon\Carbon;
 use Illuminate\Support\Collection;
+use Carbon\Carbon;
 
 // --------------------------------------------------------------------------
-// 1. ROBUST MOCK HELPERS (Simulate Laravel)
+// 1. SETUP BLADE
 // --------------------------------------------------------------------------
+$views = __DIR__ . '/mystorefrontend';
+$cache = __DIR__ . '/cache';
+if (!is_dir($cache)) @mkdir($cache, 0777, true);
 
-// --- Mock Paginator for $products->links() and $products->count() ---
-if (!class_exists('MockPaginator')) {
-    class MockPaginator implements Countable, IteratorAggregate, ArrayAccess {
-        protected $items;
-        protected $perPage;
-        protected $currentPage;
-        protected $total;
-        
-        public function __construct($items, $perPage = 15, $currentPage = 1) {
-            $this->items = collect($items);
-            $this->perPage = $perPage;
-            $this->currentPage = $currentPage;
-            $this->total = $this->items->count();
-        }
-        // Countable
-        public function count(): int { return $this->items->count(); }
-        // IteratorAggregate
-        public function getIterator(): Traversable { return $this->items->getIterator(); }
-        // ArrayAccess
-        public function offsetExists($offset): bool { return isset($this->items[$offset]); }
-        public function offsetGet($offset): mixed { return $this->items[$offset]; }
-        public function offsetSet($offset, $value): void { $this->items[$offset] = $value; }
-        public function offsetUnset($offset): void { unset($this->items[$offset]); }
-        
-        // Laravel Paginator Methods
-        public function hasMorePages() { return false; }
-        public function nextPageUrl() { return '#'; }
-        public function previousPageUrl() { return '#'; }
-        public function firstItem() { return 1; }
-        public function lastItem() { return $this->items->count(); }
-        public function total() { return $this->total; }
-        public function links() { return ''; } // Return empty string for now
-        public function appends($key) { return $this; }
-        public function hasPages() { return $this->total > $this->perPage; }
-        public function isEmpty() { return $this->items->isEmpty(); }
-    }
-}
+$blade = new Blade($views, $cache);
 
-// --- Mock Auth ---
-if (!function_exists('auth')) {
-    class MockUser {
-        public $id = 1;
-        public $first_name = 'Demo';
-        public $last_name = 'User';
-        public $name = 'Demo User';
-        public $role = 'admin'; // Change to 'buyer' or 'seller' to test matches
-        public $email = 'admin@store.com';
-        public $phone = '1234567890';
-        public $address = '123 Admin St, Dashboard City';
-        public $profile_photo_url = 'https://ui-avatars.com/api/?name=Demo+User&background=0D8ABC&color=fff';
-        public $profile_photo = null;
-        public $updated_at;
-
-        public function __construct() {
-            $this->updated_at = now();
-        }
-
-        public function isAdmin() { return $this->role === 'admin'; }
-        public function isSeller() { return $this->role === 'seller' || $this->role === 'admin'; }
-        public function isBuyer() { return true; }
-    }
-    class MockAuth {
-        public function user() { return new MockUser(); }
-        public function check() { return true; } // Always logged in for demo
-        public function id() { return 1; }
-        public function guard() { return $this; }
-    }
-    function auth() { return new MockAuth(); }
-}
-
-// --- Mock Request ---
-if (!function_exists('request')) {
-    class MockRequest {
-        public $query;
-        public function __construct() { $this->query = $_GET; }
-        public function routeIs($pattern) {
-            // Simple imitation: Matches if current view name contains pattern
-            global $currentViewName; 
-            return strpos((string)$currentViewName, $pattern) !== false;
-        }
-        public function get($key, $default=null) { return $this->query[$key] ?? $default; }
-        public function input($key, $default=null) { return $this->get($key, $default); }
-        public function all() { return $this->query; }
-        public function has($key) { return isset($this->query[$key]); }
-        public function except($keys) {
-            $keys = is_array($keys) ? $keys : [$keys];
-            return array_diff_key($this->query, array_flip($keys));
-        }
-        public function only($keys) {
-            $keys = is_array($keys) ? $keys : [$keys];
-            return array_intersect_key($this->query, array_flip($keys));
-        }
-    }
-    function request($key = null, $default = null) {
-        static $req;
-        if (!$req) $req = new MockRequest();
-        if ($key) return $req->get($key, $default);
-        return $req;
-    }
-}
-
-// --- Mock Route ---
-if (!function_exists('route')) {
-    function route($name, $params = []) {
-        $routes = [
-            'home' => '/',
-            'products.index' => '/products',
-            'products.show' => '/products/show?id=', // Dynamic append
-            'product.show' => '/products/show?id=',
-            'cart.index' => '/cart',
-            'cart.add' => '/cart', // Mock POST
-            'checkout.index' => '/checkout',
-            'checkout.single' => '/checkout',
-            'checkout.update_qty' => '/checkout/qty',
-            'checkout.remove' => '/checkout/remove',
-            'checkout.proceed' => '/checkout/proceed',
-            'checkout.success' => '/checkout/success',
-            'orders.index' => '/orders',
-            'orders.show' => '/orders/show?id=',
-            'login' => '/login',
-            'register' => '/register',
-            'logout' => '/?logout=1',
-            'profile.edit' => '/profile/edit',
-            'profile.update' => '/profile/edit',
-            'about' => '/about',
-            'contact' => '/contact',
-            // Admin
-            'admin.dashboard' => '/dashboard',
-            'admin.products.list' => '/admin/products/manage',
-            'admin.products.create' => '/admin/products/create',
-            'admin.products.edit' => '/admin/products/edit',
-            'admin.discount.category' => '/admin/discount',
-            'admin.users' => '/admin/users',
-            'admin.users.toggle' => '/admin/users', // Mock toggle
-            'admin.users.destroy' => '/admin/users', // Mock destroy
-            'admin.orders' => '/admin/orders',
-            'admin.messages.index' => '/admin/messages',
-            'admin.messages.reply' => '/admin/messages',
-            'admin.messages.destroy' => '/admin/messages',
-            'admin.revenue' => '/admin/revenue',
-            'admin.discounts.global.edit' => '/admin/discounts/global',
-        ];
-        
-        $path = $routes[$name] ?? '/' . str_replace('.', '/', $name);
-        
-        // Handle params definition differently based on if it's array or value
-        if (!is_array($params)) $params = [$params];
-
-        // Specific handling for ID appending logic used in route table above
-        if (strpos($path, '?id=') !== false && !empty($params)) {
-             $id = is_object($params[0] ?? null) ? $params[0]->id : ($params['id'] ?? $params[0] ?? 1);
-             $path .= $id;
-        } elseif (!empty($params)) {
-             $path .= (strpos($path, '?') === false ? '?' : '&') . http_build_query($params);
-        }
-        
-        return $path;
-    }
-}
-
-// --- Other Helpers ---
-if (!function_exists('csrf_token')) { function csrf_token() { return 'mock_token_123'; } }
-if (!function_exists('csrf_field')) { function csrf_field() { return '<input type="hidden" name="_token" value="mock">'; } }
+// --------------------------------------------------------------------------
+// 2. HELPER MOCKS (Laravel Style Helpers for Views)
+// --------------------------------------------------------------------------
+if (!function_exists('csrf_token')) { function csrf_token() { return $_SESSION['_token'] ?? 'token_'.bin2hex(random_bytes(16)); } }
+if (!function_exists('csrf_field')) { function csrf_field() { return '<input type="hidden" name="_token" value="'.csrf_token().'">'; } }
 if (!function_exists('method_field')) { function method_field($m) { return '<input type="hidden" name="_method" value="'.$m.'">'; } }
 if (!function_exists('asset')) { function asset($path) { return '/'.ltrim($path, '/'); } }
 if (!function_exists('url')) { function url($path = '') { return '/'.ltrim($path, '/'); } }
 if (!function_exists('old')) { function old($k, $d=null) { return $d; } }
 if (!function_exists('session')) { 
     function session($key = null, $default = null) {
-        // Mock Session Data
-        $mockSession = [
-            'cart' => [
-                1 => ['id'=>1, 'name' => 'Wireless Headphones', 'price' => 2999, 'qty' => 1, 'image' => null, 'category' => 'Electronics'],
-                2 => ['id'=>2, 'name' => 'Smart Watch', 'price' => 4500, 'qty' => 2, 'image' => null, 'category' => 'Wearables'],
-            ],
-            'success' => null, 
-            'error' => null,
-        ];
-        if ($key === null) return new class($mockSession) {
-            private $data; 
-            public function __construct($d){ $this->data = $d; }
-            public function has($k){ return isset($this->data[$k]); }
-            public function get($k, $def=null){ return $this->data[$k] ?? $def; }
-            public function forget($k){}
-        };
-        return $mockSession[$key] ?? $default;
+        if ($key === null) return new class { public function get($k, $d=null){ return $_SESSION[$k] ?? $d; } };
+        return $_SESSION[$key] ?? $default;
     } 
 }
-if (!function_exists('now')) { function now() { return Carbon::now(); } }
-
-
-// --------------------------------------------------------------------------
-// 2. DATA GENERATION
-// --------------------------------------------------------------------------
-
-function getGlobalData() {
-    $products = collect([
-        (object)['id'=>1, 'name'=>'Wireless Headphones', 'price'=>2999, 'final_price'=>2500, 'discounted_price'=>2500, 'stock'=>50, 'category'=>'Electronics', 'image'=>'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400', 'description'=>'Noise cancelling', 'specifications'=>['General'=>[['key'=>'Brand','value'=>'Sony']]], 'status'=>'active', 'is_active'=>1, 'user'=>(object)['name'=>'Admin']],
-        (object)['id'=>2, 'name'=>'Smart Watch', 'price'=>4500, 'final_price'=>4000, 'discounted_price'=>4000, 'stock'=>12, 'category'=>'Electronics', 'image'=>'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=400', 'description'=>'Fitness tracker', 'specifications'=>[], 'status'=>'active', 'is_active'=>1, 'user'=>(object)['name'=>'Admin']],
-        (object)['id'=>3, 'name'=>'Gaming Mouse', 'price'=>1200, 'final_price'=>1200, 'discounted_price'=>1200, 'stock'=>25, 'category'=>'Electronics', 'image'=>'https://images.unsplash.com/photo-1527814050087-3793815479db?w=400', 'description'=>'RGB lighting', 'specifications'=>[], 'status'=>'active', 'is_active'=>1, 'user'=>(object)['name'=>'Admin']],
-        (object)['id'=>4, 'name'=>'Laptop Backpack', 'price'=>1899, 'final_price'=>1899, 'discounted_price'=>1899, 'stock'=>30, 'category'=>'Accessories', 'image'=>'https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=400', 'description'=>'Waterproof', 'specifications'=>[], 'status'=>'active', 'is_active'=>1, 'user'=>(object)['name'=>'Admin']],
-        (object)['id'=>5, 'name'=>'Mechanical Keyboard', 'price'=>3499, 'final_price'=>3499, 'discounted_price'=>3499, 'stock'=>10, 'category'=>'Electronics', 'image'=>'https://images.unsplash.com/photo-1587829741301-dc798b83add3?w=400', 'description'=>'Blue switches', 'specifications'=>[], 'status'=>'active', 'is_active'=>1, 'user'=>(object)['name'=>'Admin']],
-    ]);
-
-    // Admin Stats
-    $stats = ['total_users' => 1250, 'total_products' => 84, 'new_today' => 12, 'total_revenue' => 154000, 'suspended_users' => 5, 'blocked_users' => 2];
-    $userStats = ['buyers' => 1100, 'sellers' => 50, 'admins' => 5, 'new_today' => 12, 'active_30d' => 850];
-    $adminExtras = ['pending_orders' => 5, 'pending_messages' => 3];
-    $monthlyRevenue = [['month' => 'Jan', 'revenue' => 12000], ['month' => 'Feb', 'revenue' => 19000], ['month' => 'Mar', 'revenue' => 15000], ['month' => 'Apr', 'revenue' => 22000]];
-    $revenue = ['growth' => '+15%'];
-
-    $allCategories = [
-        (object)['id' => 1, 'name' => 'Electronics', 'children' => [(object)['id' => 11, 'name' => 'Phones'], (object)['id' => 12, 'name' => 'Laptops']]],
-        (object)['id' => 2, 'name' => 'Fashion', 'children' => [(object)['id' => 21, 'name' => 'Men'], (object)['id' => 22, 'name' => 'Women']]]
-    ];
-
-    // Mock Users
-    $mockUsers = new MockPaginator(collect([
-        (object)['id'=>1, 'name'=>'John Doe', 'email'=>'john@example.com', 'role'=>'Buyer', 'status'=>'active', 'joined'=>'2024-01-01', 'created_at'=>now()->subMonths(3), 'phone'=>'1231231234', 'address'=>'123 Lane', 'orders_count'=>5, 'avatar'=>'https://ui-avatars.com/api/?name=John+Doe'],
-        (object)['id'=>2, 'name'=>'Jane Smith', 'email'=>'jane@example.com', 'role'=>'Seller', 'status'=>'active', 'joined'=>'2024-02-01', 'created_at'=>now()->subMonths(2), 'phone'=>'9876543210', 'address'=>'456 Road', 'orders_count'=>12, 'avatar'=>'https://ui-avatars.com/api/?name=Jane+Smith'],
-    ]));
-
-    // Mock Orders
-    $mockOrders = new MockPaginator(collect([
-        (object)['id'=>101, 'user'=>(object)['name'=>'John Doe','email'=>'john@example.com'], 'created_at'=>now(), 'status'=>'placed', 'total'=>2999, 'items'=>collect([ (object)['product'=>(object)['name'=>'Product A','image'=>null], 'qty'=>1] ]) ],
-        (object)['id'=>102, 'user'=>(object)['name'=>'Jane Smith','email'=>'jane@example.com'], 'created_at'=>now()->subDay(), 'status'=>'delivered', 'total'=>4500, 'items'=>collect([ (object)['product'=>(object)['name'=>'Product B','image'=>null], 'qty'=>1] ]) ],
-    ]));
-
-    // Mock Messages
-    $mockMessages = new MockPaginator(collect([
-        (object)[
-            'id'=>1, 'first_name'=>'Alice', 'last_name'=>'Wonder', 'email'=>'alice@example.com', 'subject'=>'Help needed', 'message'=>'I need help with my order.', 'created_at'=>now(),
-            'replies'=>collect([(object)['subject'=>'Re: Help', 'message'=>'Sure', 'created_at'=>now()]])
-        ],
-        (object)[
-            'id'=>2, 'first_name'=>'Bob', 'last_name'=>'Builder', 'email'=>'bob@example.com', 'subject'=>'Product Question', 'message'=>'Is this item durable?', 'created_at'=>now()->subHours(2),
-            'replies'=>collect([])
-        ]
-    ]));
-    
-    // Checkout Vars
-    $cart = session('cart', []);
-    $subtotal = 0; foreach($cart as $i) $subtotal += ($i['price']*$i['qty']);
-    $shipping = 0; 
-    $total = $subtotal;
-
-    return [
-        'products' => new MockPaginator($products),
-        'simpleProducts' => $products->map(fn($p) => (array)$p)->toArray(), 
-        'allCategories' => $allCategories,
-        'categories' => ['Electronics', 'Fashion', 'Home', 'Beauty'],
-        'cart' => $cart,
-        'items' => $cart, // For checkout view which uses $items
-        'stats' => $stats,
-        'userStats' => $userStats,
-        'adminExtras' => $adminExtras,
-        'monthlyRevenue' => $monthlyRevenue,
-        'revenue' => $revenue,
-        'errors' => new ViewErrorBag(),
-        'users' => $mockUsers,
-        'orders' => $mockOrders,
-        'messages' => $mockMessages,
-        'status' => 'all', // For orders page
-        'counts' => ['all'=>2, 'placed'=>1, 'processing'=>0, 'shipped'=>0, 'delivered'=>1, 'cancelled'=>0, 'return_requested'=>0, 'returned'=>0],
-        'product' => $products->first(), // Default for show pages if not specified
-        'similarProducts' => $products->take(2),
-        'randomProducts' => $products->take(2),
-        'subtotal' => $subtotal,
-        'shipping' => $shipping,
-        'discount' => 0,
-        'platform_fee' => 0,
-        'total' => $total,
-        'carouselSlides' => [
-            ['image' => 'https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?w=1200', 'title' => 'New Arrivals', 'link' => '#'],
-            ['image' => 'https://images.unsplash.com/photo-1483985988355-763728e1935b?w=1200', 'title' => 'Fashion Sale', 'link' => '#'],
-        ],
-    ];
+if (!function_exists('auth')) {
+    function auth() {
+        return new class {
+            public function user() { return $_SESSION['user'] ?? null; }
+            public function check() { return isset($_SESSION['user']); }
+            public function id() { return $_SESSION['user']->id ?? null; }
+        };
+    }
 }
-
-
-// --------------------------------------------------------------------------
-// 3. BLADE SETUP & ROUTING
-// --------------------------------------------------------------------------
-
-$views = __DIR__ . '/mystorefrontend';
-$cache = __DIR__ . '/cache';
-if (!is_dir($cache)) @mkdir($cache, 0777, true);
-
-$blade = new Blade($views, $cache);
-$blade->addExtension('php', 'blade');
-
-// Router Logic
-$uri = urldecode(parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH));
-$uri = rtrim($uri, '/') ?: '/'; 
-
-// Route Map
-$map = [
-    '/' => 'products.index',
-    '/index.php' => 'products.index',
-    '/products' => 'products.index',
-    '/products/show' => 'products.show',
-    '/cart' => 'cart.index',
-    '/checkout' => 'checkout.index',
-    '/checkout/process' => 'checkout.success', // Mock process -> success
-    '/checkout/success' => 'checkout.success',
-    '/checkout/proceed' => 'checkout.success',
-    '/orders' => 'orders.index',
-    '/login' => 'auth.login',
-    '/register' => 'auth.register',
-    '/about' => 'about',
-    '/contact' => 'contact',
-    '/profile/edit' => 'profile.edit',
-    
-    // Admin
-    '/dashboard' => 'admin.dashboard',
-    '/admin/users' => 'admin.users.index',
-    '/admin/products/manage' => 'admin.products.manage',
-    '/admin/products/create' => 'admin.products.create',
-    '/admin/orders' => 'admin.orders',
-    '/admin/messages' => 'admin.messages.index',
-    '/admin/revenue' => 'admin.revenue',
-];
-
-$viewName = $map[$uri] ?? null;
-
-if (!$viewName) {
-    $cleanPath = ltrim($uri, '/');
-    $potentialView = str_replace('/', '.', $cleanPath);
-    
-    if ($blade->exists($potentialView)) {
-        $viewName = $potentialView;
-    } elseif ($blade->exists($potentialView . '.index')) {
-        $viewName = $potentialView . '.index';
-    } else {
-        $viewName = 'errors.404'; 
+if (!function_exists('request')) {
+    function request($key = null, $default = null) {
+        if ($key === null) return new class { public function all(){ return $_GET; } public function has($k){ return isset($_GET[$k]); } };
+        return $_GET[$key] ?? $default;
+    }
+}
+if (!function_exists('route')) {
+    function route($name, $params = []) {
+        $routes = [
+            'home' => '/',
+            'products.index' => '/products',
+            'product.show' => '/products/show?id=',
+            'products.show' => '/products/show?id=',
+            'cart.index' => '/cart',
+            'cart.add' => '/cart',
+            'checkout.index' => '/checkout',
+            'checkout.process' => '/checkout/success',
+            'checkout.proceed' => '/checkout/success',
+            'checkout.success' => '/checkout/success', 
+            'orders.index' => '/orders',
+            'orders.show' => '/orders/show?id=',
+            'login' => '/login',
+            'register' => '/register',
+            'logout' => '/?logout=1',
+            'admin.users' => '/admin/users',
+            'admin.users.update' => '/admin/users',
+            'admin.users.destroy' => '/admin/users',
+            'admin.users.toggle' => '/admin/users',
+            'admin.orders' => '/admin/orders',
+            'admin.products.list' => '/admin/products/manage',
+            'admin.products.create' => '/admin/products/create',
+            'admin.products.edit' => '/admin/products/edit?id=',
+            'admin.products.destroy' => '/admin/products/manage',
+            'admin.messages.index' => '/admin/messages',
+        ];
+        $path = $routes[$name] ?? '/';
+        
+        // Parameter Handling
+        if(is_array($params)) {
+             if(isset($params['id'])) $path .= $params['id'];
+             else if(!empty($params)) {
+                  // If route has query param ?id=, append value
+                  if(strpos($path, '=') !== false) $path .= reset($params);
+                  else $path .= '?' . http_build_query($params);
+             }
+        } elseif($params) {
+             if(strpos($path, '=') !== false) $path .= $params;
+        }
+        return $path;
     }
 }
 
-$currentViewName = $viewName;
+// --------------------------------------------------------------------------
+// 3. ROUTER & CONTROLLER LOGIC
+// --------------------------------------------------------------------------
 
-if (!$blade->exists($viewName)) {
-    http_response_code(404);
-    echo "<h1>404 Not Found</h1><p>View <code>$viewName</code> not found.</p>";
+$uri = urldecode(parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH));
+$uri = rtrim($uri, '/') ?: '/';
+
+// Simple Logout
+if (isset($_GET['logout'])) {
+    session_destroy();
+    header("Location: /");
     exit;
 }
 
+// Data Container
+$data = [];
+$data['errors'] = new ViewErrorBag();
+$data['cart'] = $_SESSION['cart'] ?? [];
+
+// Calculate Cart Totals locally for now alongside API products
+$subtotal = 0;
+foreach($data['cart'] as $item) $subtotal += ($item['price'] * $item['qty']);
+$data['subtotal'] = $subtotal;
+$data['total'] = $subtotal; 
+$data['shipping'] = 0;
+$data['discount'] = 0;
+$data['platform_fee'] = 0;
+
+// Fetch Global Categories (Cached in session)
+if (!isset($_SESSION['categories'])) {
+    $catRes = api_client('categories'); 
+    $_SESSION['categories'] = $catRes->data ?? ['Electronics', 'Fashion', 'Home', 'Beauty', 'Books']; 
+}
+$data['categories'] = $_SESSION['categories'];
+$data['allCategories'] = []; // For admin select (transform if needed)
+
+// --- ROUTE SWITCHING ---
+$viewName = 'products.index'; 
+
+if ($uri === '/' || $uri === '/products' || $uri === '/index.php') {
+    // Products Index
+    $viewName = 'products.index';
+    $queryParams = http_build_query($_GET);
+    $apiRes = api_client("products?$queryParams");
+    $data['products'] = collect($apiRes->data ?? []);
+    
+    // Fallback Mock Paginator methods if API returns simple array
+    if (!$data['products'] instanceof \Illuminate\Support\Collection) {
+         $data['products'] = collect($data['products']);
+    }
+
+    // Mock Pagination helpers on the collection if missing
+    if (!method_exists($data['products'], 'hasMorePages')) {
+        $data['products']->macro('hasMorePages', function() { return false; });
+        $data['products']->macro('nextPageUrl', function() { return '#'; });
+        $data['products']->macro('links', function() { return ''; });
+    }
+
+    // Banners
+    $data['carouselSlides'] = [
+        ['image' => 'https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?w=1200&q=80', 'title' => 'Mega Sale', 'link' => '#'],
+        ['image' => 'https://images.unsplash.com/photo-1483985988355-763728e1935b?w=1200&q=80', 'title' => 'Fashion', 'link' => '#']
+    ];
+
+} elseif ($uri === '/products/show') {
+    // Single Product
+    $viewName = 'products.show';
+    $id = $_GET['id'] ?? 0;
+    $apiRes = api_client("products/$id");
+    // If API returns array inside data
+    $prod = $apiRes->data ?? $apiRes ?? null;
+    $data['product'] = $prod;
+    $data['relatedProducts'] = collect([]);
+
+} elseif ($uri === '/cart') {
+    // Actions - Add/Remove handled by simple session logic for speed, but fetching fresh data from API
+    if (isset($_GET['action']) && $_GET['action'] == 'add') {
+        $id = $_GET['id'] ?? 0;
+        if (!isset($_SESSION['cart'][$id])) {
+            $p = api_client("products/$id");
+            $p = $p->data ?? $p ?? null;
+            if ($p) {
+                $_SESSION['cart'][$id] = [
+                    'id' => $p->id,
+                    'name' => $p->name,
+                    'price' => $p->price,
+                    'image' => $p->image, // Will resolve in view
+                    'qty' => 1
+                ];
+            }
+        }
+        header("Location: /cart"); exit;
+    }
+    // Remove Action
+    if (isset($_GET['action']) && $_GET['action'] == 'remove') {
+         $id = $_GET['id'] ?? 0;
+         unset($_SESSION['cart'][$id]);
+         header("Location: /cart"); exit;
+    }
+    
+    $viewName = 'cart.index';
+    $data['cartItems'] = $_SESSION['cart'] ?? [];
+
+} elseif ($uri === '/checkout') {
+    $viewName = 'checkout.index';
+    $data['items'] = $_SESSION['cart'] ?? [];
+    
+} elseif ($uri === '/checkout/success') {
+    $viewName = 'checkout.success';
+    $_SESSION['cart'] = []; 
+
+} elseif ($uri === '/orders') {
+    $viewName = 'orders.index';
+    // User must be logged in in real scenario, here we try fetch
+    $apiRes = api_client('orders'); 
+    $data['orders'] = collect($apiRes->data ?? []);
+    
+} elseif ($uri === '/login') {
+    $viewName = 'auth.login';
+    if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+        $res = api_client('login', 'POST', $_POST);
+        if ($res && (isset($res->token) || isset($res->access_token))) {
+            $_SESSION['api_token'] = $res->token ?? $res->access_token;
+            $_SESSION['user'] = $res->user ?? (object)['name'=>'User', 'email'=>$_POST['email']];
+            header("Location: /"); exit;
+        } else {
+             $data['errors']->add('login', 'Invalid credentials');
+        }
+    }
+
+} elseif ($uri === '/register') {
+    $viewName = 'auth.register';
+    if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+        $res = api_client('register', 'POST', $_POST);
+        if ($res && (isset($res->token) || isset($res->access_token))) {
+             $_SESSION['api_token'] = $res->token ?? $res->access_token;
+             $_SESSION['user'] = $res->user;
+             header("Location: /"); exit;
+        }
+    }
+
+} elseif (strpos($uri, '/admin') === 0) {
+    // Admin Routes
+    if ($uri === '/admin/users') {
+        $viewName = 'admin.users.index';
+        $res = api_client('admin/users');
+        $data['users'] = collect($res->data ?? []);
+        
+    } elseif ($uri === '/admin/orders') {
+        // Fallback or explicit check
+        $viewName = 'admin.orders.index';
+        if (!$blade->exists($viewName)) $viewName = 'admin.orders'; // If file is admin/orders.php
+
+        $res = api_client('admin/orders');
+        $data['orders'] = collect($res->data ?? []);
+
+    } elseif ($uri === '/admin/products/manage') {
+        $viewName = 'admin.products.manage';
+        $res = api_client('products'); // Or admin/products
+        $data['products'] = collect($res->data ?? []);
+        // Setup simple pagination on this collection if needed
+        if (!method_exists($data['products'], 'hasMorePages')) {
+             $data['products']->macro('hasMorePages', function(){ return false;});
+             $data['products']->macro('nextPageUrl', function(){ return '#';});
+        }
+        
+    } elseif ($uri === '/admin/messages') {
+         $viewName = 'admin.messages.index';
+         $res = api_client('admin/messages');
+         $data['messages'] = collect($res->data ?? []);
+    } else {
+        $viewName = 'admin.dashboard';
+        // Dashboard Stats
+        $data['stats'] = ['total_users'=>0, 'total_products'=>0, 'total_revenue'=>0]; // Defaults
+    }
+}
+
 // --------------------------------------------------------------------------
-// 4. RENDER WITH SAFE DEFAULTS
+// 4. RENDER
 // --------------------------------------------------------------------------
 
 try {
-    $data = getGlobalData();
-    // Pass everything
+    if (!$blade->exists($viewName)) {
+        // Try fallback with dot notation for cleaner URLs like /admin/users -> admin.users
+        $fallback = str_replace('/', '.', ltrim($uri, '/'));
+        if ($blade->exists($fallback)) {
+            $viewName = $fallback;
+        } elseif ($blade->exists($fallback . '.index')) {
+             $viewName = $fallback . '.index';
+        } else {
+             echo "<h1>404 Not Found</h1> View not found for uri: $uri"; exit;
+        }
+    }
     echo $blade->make($viewName, $data)->render();
 } catch (Exception $e) {
     echo "<div style='font-family:sans-serif; padding:20px; border-left:5px solid red; background:#fff0f0;'>";

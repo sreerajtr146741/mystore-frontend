@@ -5,7 +5,7 @@
     $price = (float)($p->price ?? 0);
     $discounted = (float)($p->discounted_price ?? $p->final_price ?? $price);
     $stock = $p->stock ?? 0;
-    $image = $p->image ?? 'https://via.placeholder.com/400?text=No+Image';
+    $image = backend_img($p->image ?? null);
     $category = $p->category ?? 'General';
     $isNew = $p->is_new ?? false;
     
