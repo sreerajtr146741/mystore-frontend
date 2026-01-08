@@ -144,6 +144,8 @@ if (!function_exists('route')) {
             'admin.products.edit' => '/admin/products/edit',
             'admin.discount.category' => '/admin/discount',
             'admin.users' => '/admin/users',
+            'admin.users.toggle' => '/admin/users', // Mock toggle
+            'admin.users.destroy' => '/admin/users', // Mock destroy
             'admin.orders' => '/admin/orders',
             'admin.messages.index' => '/admin/messages',
             'admin.messages.reply' => '/admin/messages',
@@ -312,6 +314,7 @@ $map = [
     '/products/show' => 'products.show',
     '/cart' => 'cart.index',
     '/checkout' => 'checkout.index',
+    '/checkout/process' => 'checkout.success', // Mock process -> success
     '/checkout/success' => 'checkout.success',
     '/checkout/proceed' => 'checkout.success',
     '/orders' => 'orders.index',
