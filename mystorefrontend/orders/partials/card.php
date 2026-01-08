@@ -57,15 +57,7 @@
                         @foreach($items->take(4) as $item)
                             @php
                                 $prod = $item->product ?? (object)[];
-                                $img = $prod->image ?? null;
-                                $imgSrc = 'https://via.placeholder.com/150';
-                                if($img) {
-                                    if(filter_var($img, FILTER_VALIDATE_URL)) {
-                                        $imgSrc = $img;
-                                    } else {
-                                        $imgSrc = asset('storage/'.$img);
-                                    }
-                                }
+                                $imgSrc = backend_img($prod->image ?? null);
                             @endphp
                             <div class="position-relative" style="min-width: 70px;">
                                 <div class="ratio ratio-1x1 rounded-3 overflow-hidden border bg-white">

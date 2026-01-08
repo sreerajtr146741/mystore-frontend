@@ -199,18 +199,7 @@
                         <div class="item-row d-flex px-4">
                             <!-- Image and Quantity Section -->
                             <div class="flex-shrink-0 text-center" style="width: 112px;">
-                                @php
-                                    $imagePath = $item->image ?? '';
-                                    $imageUrl = '';
-                                    if(empty($imagePath)) {
-                                        $imageUrl = 'https://via.placeholder.com/150?text=No+Image';
-                                    } elseif (filter_var($imagePath, FILTER_VALIDATE_URL)) {
-                                        $imageUrl = $imagePath;
-                                    } else {
-                                        // Ensure leading slash for local storage
-                                        $imageUrl = asset('storage/' . ltrim($imagePath, '/'));
-                                    }
-                                @endphp
+                                    $imgSrc = backend_img($item->image ?? null);
                                 <img src="{{ $imageUrl }}" class="item-image mb-2" alt="Product">
                                 
                                 <div class="qty-control justify-content-center">
