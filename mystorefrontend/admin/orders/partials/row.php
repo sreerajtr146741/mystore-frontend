@@ -32,11 +32,15 @@
         <td class="py-4">
             <div class="d-flex flex-column gap-1">
                 @php
-                    $createdAt = optional($order->created_at ?? null);
-                    if(!($createdAt instanceof \Carbon\Carbon) && $createdAt) try { $createdAt = \Carbon\Carbon::parse($createdAt); } catch(\Exception $e){}
+                    $createdAt = $order->created_at ?? null;
+                    if ($createdAt && !($createdAt instanceof \DateTimeInterface)) {
+                        try { $createdAt = \Carbon\Carbon::parse($createdAt); } catch(\Exception $e){ $createdAt = null; }
+                    }
                     
-                    $updatedAt = optional($order->updated_at ?? null);
-                    if(!($updatedAt instanceof \Carbon\Carbon) && $updatedAt) try { $updatedAt = \Carbon\Carbon::parse($updatedAt); } catch(\Exception $e){}
+                    $updatedAt = $order->updated_at ?? null;
+                    if ($updatedAt && !($updatedAt instanceof \DateTimeInterface)) {
+                        try { $updatedAt = \Carbon\Carbon::parse($updatedAt); } catch(\Exception $e){ $updatedAt = null; }
+                    }
                 @endphp
                 
                 <div class="small text-white-50 d-flex align-items-center gap-2">
