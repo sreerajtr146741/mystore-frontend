@@ -127,6 +127,7 @@ if (!function_exists('route')) {
             'checkout.update_qty' => '/checkout/qty',
             'checkout.remove' => '/checkout/remove',
             'checkout.proceed' => '/checkout/proceed',
+            'checkout.success' => '/checkout/success',
             'orders.index' => '/orders',
             'orders.show' => '/orders/show?id=',
             'login' => '/login',

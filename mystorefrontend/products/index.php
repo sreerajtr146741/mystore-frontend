@@ -139,7 +139,7 @@
                     {{-- Static Slide 1: Home Banner --}}
                     <div class="carousel-item active">
                         <div class="banner-container">
-                            <img src="{{ asset('images/banners/home-banner.png') }}" class="d-block standard-banner" alt="Super Sale">
+                            <img src="https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?w=1200&q=80" class="d-block standard-banner" alt="Super Sale">
                         </div>
                     </div>
 
