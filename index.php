@@ -147,11 +147,18 @@ if (!function_exists('request')) {
         }
     }
     
-    function request() {
+    function request($key = null, $default = null) {
         static $request = null;
         if ($request === null) {
             $request = new MockRequest();
         }
+        
+        // If a key is provided, return the value
+        if ($key !== null) {
+            return $request->get($key, $default);
+        }
+        
+        // Otherwise return the request object
         return $request;
     }
 }

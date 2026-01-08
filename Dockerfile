@@ -1,16 +1,12 @@
 FROM php:8.2-apache
 
-# Install system dependencies
+# Install system dependencies and PHP extensions
 RUN apt-get update && apt-get install -y \
-    git \
     unzip \
     libzip-dev \
-    && rm -rf /var/lib/apt/lists/*
+    && docker-php-ext-install mysqli pdo pdo_mysql zip
 
-# Install PHP extensions
-RUN docker-php-ext-install mysqli pdo pdo_mysql zip
-
-# Enable Apache rewrite module
+# Enable Apache mod_rewrite for URL routing
 RUN a2enmod rewrite
 
 # Install Composer
@@ -22,7 +18,7 @@ WORKDIR /var/www/html
 # Copy project files
 COPY . .
 
-# Install PHP dependencies via Composer
+# Install PHP dependencies
 RUN composer install --no-dev --optimize-autoloader
 
 # Create cache directory for Blade
