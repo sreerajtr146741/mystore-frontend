@@ -1,0 +1,15 @@
+vendor
+.git
+.idea
+.vscode
+node_modules
+Dockerfile
+render.yaml
+COMPLETE_BUGFIX_SUMMARY.md
+DEPLOYMENT_SUMMARY.md
+BUGFIX_VIEWERRORBAG.md
+QUICK_REFERENCE.md
+URL_REFERENCE.md
+README.md
+**/*.log
+.env
