@@ -8,8 +8,11 @@
 @endphp
 @forelse($products as $p)
 @php
-    $img = $resolveImg($p->image);
-    $isActive = ($p->status === 'active') || ($p->is_active == 1);
+@php
+    $img = $resolveImg($p->image ?? null);
+    $status = $p->status ?? 'active';
+    $isActiveProp = $p->is_active ?? 1;
+    $isActive = ($status === 'active') || ($isActiveProp == 1);
 @endphp
 <tr>
     <td>#{{ $p->id }}</td>

@@ -205,11 +205,11 @@ if (!function_exists('now')) { function now() { return Carbon::now(); } }
 
 function getGlobalData() {
     $products = collect([
-        (object)['id'=>1, 'name'=>'Wireless Headphones', 'price'=>2999, 'final_price'=>2500, 'discounted_price'=>2500, 'stock'=>50, 'category'=>'Electronics', 'image'=>'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400', 'description'=>'Noise cancelling', 'specifications'=>['General'=>[['key'=>'Brand','value'=>'Sony']]]],
-        (object)['id'=>2, 'name'=>'Smart Watch', 'price'=>4500, 'final_price'=>4000, 'discounted_price'=>4000, 'stock'=>12, 'category'=>'Electronics', 'image'=>'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=400', 'description'=>'Fitness tracker', 'specifications'=>[]],
-        (object)['id'=>3, 'name'=>'Gaming Mouse', 'price'=>1200, 'final_price'=>1200, 'discounted_price'=>1200, 'stock'=>25, 'category'=>'Electronics', 'image'=>'https://images.unsplash.com/photo-1527814050087-3793815479db?w=400', 'description'=>'RGB lighting', 'specifications'=>[]],
-        (object)['id'=>4, 'name'=>'Laptop Backpack', 'price'=>1899, 'final_price'=>1899, 'discounted_price'=>1899, 'stock'=>30, 'category'=>'Accessories', 'image'=>'https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=400', 'description'=>'Waterproof', 'specifications'=>[]],
-        (object)['id'=>5, 'name'=>'Mechanical Keyboard', 'price'=>3499, 'final_price'=>3499, 'discounted_price'=>3499, 'stock'=>10, 'category'=>'Electronics', 'image'=>'https://images.unsplash.com/photo-1587829741301-dc798b83add3?w=400', 'description'=>'Blue switches', 'specifications'=>[]],
+        (object)['id'=>1, 'name'=>'Wireless Headphones', 'price'=>2999, 'final_price'=>2500, 'discounted_price'=>2500, 'stock'=>50, 'category'=>'Electronics', 'image'=>'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400', 'description'=>'Noise cancelling', 'specifications'=>['General'=>[['key'=>'Brand','value'=>'Sony']]], 'status'=>'active', 'is_active'=>1, 'user'=>(object)['name'=>'Admin']],
+        (object)['id'=>2, 'name'=>'Smart Watch', 'price'=>4500, 'final_price'=>4000, 'discounted_price'=>4000, 'stock'=>12, 'category'=>'Electronics', 'image'=>'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=400', 'description'=>'Fitness tracker', 'specifications'=>[], 'status'=>'active', 'is_active'=>1, 'user'=>(object)['name'=>'Admin']],
+        (object)['id'=>3, 'name'=>'Gaming Mouse', 'price'=>1200, 'final_price'=>1200, 'discounted_price'=>1200, 'stock'=>25, 'category'=>'Electronics', 'image'=>'https://images.unsplash.com/photo-1527814050087-3793815479db?w=400', 'description'=>'RGB lighting', 'specifications'=>[], 'status'=>'active', 'is_active'=>1, 'user'=>(object)['name'=>'Admin']],
+        (object)['id'=>4, 'name'=>'Laptop Backpack', 'price'=>1899, 'final_price'=>1899, 'discounted_price'=>1899, 'stock'=>30, 'category'=>'Accessories', 'image'=>'https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=400', 'description'=>'Waterproof', 'specifications'=>[], 'status'=>'active', 'is_active'=>1, 'user'=>(object)['name'=>'Admin']],
+        (object)['id'=>5, 'name'=>'Mechanical Keyboard', 'price'=>3499, 'final_price'=>3499, 'discounted_price'=>3499, 'stock'=>10, 'category'=>'Electronics', 'image'=>'https://images.unsplash.com/photo-1587829741301-dc798b83add3?w=400', 'description'=>'Blue switches', 'specifications'=>[], 'status'=>'active', 'is_active'=>1, 'user'=>(object)['name'=>'Admin']],
     ]);
 
     // Admin Stats
@@ -226,14 +226,14 @@ function getGlobalData() {
 
     // Mock Users
     $mockUsers = new MockPaginator(collect([
-        (object)['id'=>1, 'name'=>'John Doe', 'email'=>'john@example.com', 'role'=>'Buyer', 'status'=>'Active', 'joined'=>'2024-01-01', 'phone'=>'1231231234', 'address'=>'123 Lane', 'orders_count'=>5, 'avatar'=>'https://ui-avatars.com/api/?name=John+Doe'],
-        (object)['id'=>2, 'name'=>'Jane Smith', 'email'=>'jane@example.com', 'role'=>'Seller', 'status'=>'Active', 'joined'=>'2024-02-01', 'phone'=>'9876543210', 'address'=>'456 Road', 'orders_count'=>12, 'avatar'=>'https://ui-avatars.com/api/?name=Jane+Smith'],
+        (object)['id'=>1, 'name'=>'John Doe', 'email'=>'john@example.com', 'role'=>'Buyer', 'status'=>'active', 'joined'=>'2024-01-01', 'created_at'=>now()->subMonths(3), 'phone'=>'1231231234', 'address'=>'123 Lane', 'orders_count'=>5, 'avatar'=>'https://ui-avatars.com/api/?name=John+Doe'],
+        (object)['id'=>2, 'name'=>'Jane Smith', 'email'=>'jane@example.com', 'role'=>'Seller', 'status'=>'active', 'joined'=>'2024-02-01', 'created_at'=>now()->subMonths(2), 'phone'=>'9876543210', 'address'=>'456 Road', 'orders_count'=>12, 'avatar'=>'https://ui-avatars.com/api/?name=Jane+Smith'],
     ]));
 
     // Mock Orders
     $mockOrders = new MockPaginator(collect([
-        (object)['id'=>101, 'user'=>(object)['name'=>'John Doe','email'=>'john@example.com'], 'created_at'=>now(), 'status'=>'placed', 'total'=>2999],
-        (object)['id'=>102, 'user'=>(object)['name'=>'Jane Smith','email'=>'jane@example.com'], 'created_at'=>now()->subDay(), 'status'=>'delivered', 'total'=>4500],
+        (object)['id'=>101, 'user'=>(object)['name'=>'John Doe','email'=>'john@example.com'], 'created_at'=>now(), 'status'=>'placed', 'total'=>2999, 'items'=>collect([ (object)['product'=>(object)['name'=>'Product A','image'=>null], 'qty'=>1] ]) ],
+        (object)['id'=>102, 'user'=>(object)['name'=>'Jane Smith','email'=>'jane@example.com'], 'created_at'=>now()->subDay(), 'status'=>'delivered', 'total'=>4500, 'items'=>collect([ (object)['product'=>(object)['name'=>'Product B','image'=>null], 'qty'=>1] ]) ],
     ]));
 
     // Mock Messages
