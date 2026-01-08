@@ -199,11 +199,18 @@
                         <div class="item-row d-flex px-4">
                             <!-- Image and Quantity Section -->
                             <div class="flex-shrink-0 text-center" style="width: 112px;">
-                                @if(\Illuminate\Support\Str::startsWith($item->image, 'http'))
-                                    <img src="{{ $item->image }}" class="item-image mb-2" alt="Product">
-                                @else
-                                    <img src="{{ asset('storage/'.$item->image) }}" class="item-image mb-2" alt="Product">
-                                @endif
+                                @php
+                                    $imagePath = $item->image ?? '';
+                                    $imageUrl = '';
+                                    if(empty($imagePath)) {
+                                        $imageUrl = 'https://via.placeholder.com/150?text=No+Image';
+                                    } elseif (filter_var($imagePath, FILTER_VALIDATE_URL)) {
+                                        $imageUrl = $imagePath;
+                                    } else {
+                                        $imageUrl = asset('storage/' . ltrim($imagePath, '/'));
+                                    }
+                                @endphp
+                                <img src="{{ $imageUrl }}" class="item-image mb-2" alt="Product">
                                 
                                 <div class="qty-control justify-content-center">
                                     <button type="button" class="qty-btn" onclick="updateQty('{{ $item->id }}', -1)">−</button>
