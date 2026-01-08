@@ -26,10 +26,10 @@
 </head>
 <body>
 @php
-  $user = auth()->user()->fresh();
-  $fallback = 'https://ui-avatars.com/api/?background=6d28d9&color=fff&name='.urlencode($user->name);
-  $photoPath = $user->profile_photo ? asset('storage/'.$user->profile_photo) : $fallback;
-  $photoUrl = $photoPath.'?t='.(optional($user->updated_at)->timestamp ?? time());
+  $user = auth()->user(); // Removed .fresh() call which does not exist on MockUser
+  $fallback = 'https://ui-avatars.com/api/?background=6d28d9&color=fff&name='.urlencode($user->name ?? 'User');
+  $photoPath = ($user->profile_photo ?? false) ? asset('storage/'.$user->profile_photo) : $fallback;
+  $photoUrl = $photoPath.'?t='.(optional($user->updated_at ?? null)->timestamp ?? time());
 @endphp
 
 <nav class="navbar navbar-light bg-white shadow-sm">
@@ -85,12 +85,16 @@
             <div class="panel-soft">
               <div class="grid-2">
                 <div class="field">
-                  <label class="fw-bold"><i class="bi bi-person-circle me-1 text-primary"></i> Full Name</label>
-                  <input type="text" name="name" class="form-control glass form-control-lg" value="{{ old('name', $user->name) }}" required>
+                  <label class="fw-bold"><i class="bi bi-person-circle me-1 text-primary"></i> First Name</label>
+                  <input type="text" name="first_name" class="form-control glass form-control-lg" value="{{ old('first_name', $user->first_name ?? '') }}" required>
                 </div>
                 <div class="field">
+                  <label class="fw-bold"><i class="bi bi-person-circle me-1 text-primary"></i> Last Name</label>
+                  <input type="text" name="last_name" class="form-control glass form-control-lg" value="{{ old('last_name', $user->last_name ?? '') }}" required>
+                </div>
+                <div class="field" style="grid-column: span 2;">
                   <label class="fw-bold"><i class="bi bi-envelope-at me-1 text-primary"></i> Email Address</label>
-                  <input type="email" name="email" class="form-control glass form-control-lg" value="{{ old('email', $user->email) }}" required>
+                  <input type="email" name="email" class="form-control glass form-control-lg" value="{{ old('email', $user->email ?? '') }}" required>
                 </div>
               </div>
               <div class="grid-2 mt-3">

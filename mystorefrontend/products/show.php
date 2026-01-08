@@ -143,7 +143,7 @@
                 </div>
             
                 <div class="action-btns">
-                    @auth
+                    @if(auth()->check())
                         <form action="{{ route('cart.add', $p) }}" method="POST" class="flex-fill d-flex">
                             @csrf
                             <input type="hidden" name="qty" value="1">
@@ -160,7 +160,7 @@
                     @else
                         <a href="{{ route('login') }}" class="btn btn-fk btn-cart"><i class="bi bi-cart-fill"></i> ADD TO CART</a>
                         <a href="{{ route('login') }}" class="btn btn-fk btn-buy"><i class="bi bi-lightning-fill"></i> BUY NOW</a>
-                    @endauth
+                    @endif
                 </div>
             </div>
         </div>
