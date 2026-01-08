@@ -12,10 +12,8 @@
     @stack('styles')
     <style>
         body { font-family: 'Poppins', sans-serif; background-color: #f8f9fa; padding-top: 60px; }
-        
-        /* Blue Header Styles */
         .blue-header {
-            background-color: #87CEEB; /* Sky blue matching image */
+            background-color: #87CEEB; /* Sky blue */
             padding: 0;
             display: flex;
             align-items: center;
@@ -24,99 +22,37 @@
             box-shadow: 0 4px 6px rgba(0,0,0,0.05);
             position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
         }
-
         .nav-container {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            width: 100%;
-            max-width: 1200px;
-            padding: 0 15px;
+            display: flex; align-items: center; justify-content: space-between;
+            width: 100%; max-width: 1200px; padding: 0 15px;
         }
-
-        .left-nav {
-            display: flex;
-            align-items: center;
-            gap: 5px;
-        }
-
+        .left-nav { display: flex; align-items: center; gap: 5px; }
         .nav-link-custom {
-            color: #4a4a4a;
-            font-weight: 500;
-            text-decoration: none;
-            padding: 8px 16px;
-            font-size: 0.9rem;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            border-radius: 4px;
-            transition: all 0.2s;
+            color: #4a4a4a; font-weight: 500; text-decoration: none; padding: 8px 16px;
+            font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.5px;
+            border-radius: 4px; transition: all 0.2s;
         }
-
-        .nav-link-custom:hover {
-            color: #000;
-        }
-
+        .nav-link-custom:hover { color: #000; }
         .nav-link-custom.active {
-            background-color: #fff;
-            color: #333;
-            font-weight: 600;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            background-color: #fff; color: #333; font-weight: 600; box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
-
-        .right-nav {
-            display: flex;
-            align-items: center;
-            gap: 20px;
+        .right-nav { display: flex; align-items: center; gap: 20px; }
+        .right-item { 
+            display: flex; align-items: center; gap: 6px; text-decoration: none;
+            color: #333; font-weight: 500; font-size: 0.95rem;
         }
-
-        .right-item {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            text-decoration: none;
-            color: #333;
-            font-weight: 500;
-            font-size: 0.95rem;
-        }
-
-        .right-item i {
-            font-size: 1.1rem;
-        }
-
-        .icon-btn {
-            background: none;
-            border: none;
-            cursor: pointer;
-            font-size: 1.1rem;
-            color: #333;
-            padding: 0;
-        }
-
-        /* Search Toggle */
+        .right-item i { font-size: 1.1rem; }
         .search-bar-container {
-            display: none;
-            position: absolute;
-            top: 60px;
-            left: 0;
-            width: 100%;
-            background: #fff;
-            padding: 10px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-            justify-content: center;
+            display: none; position: absolute; top: 60px; left: 0; width: 100%;
+            background: #fff; padding: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); justify-content: center;
         }
         .search-bar-container.active { display: flex; }
         .search-input-header {
-            width: 100%;
-            max-width: 600px;
-            border: 1px solid #ddd;
-            padding: 8px 15px;
-            border-radius: 20px;
-            outline: none;
+            width: 100%; max-width: 600px; border: 1px solid #ddd; padding: 8px 15px;
+            border-radius: 20px; outline: none;
         }
-
-        /* Mobile Responsive */
         @media (max-width: 991px) {
-            .left-nav { display: none; } /* Use hamburger for full menu usually, simplifying for this request */
+            .left-nav { display: none; }
             .mobile-menu-btn { display: block; margin-right: 15px; font-size: 1.5rem; cursor: pointer; }
         }
         @media (min-width: 992px) {
@@ -128,22 +64,20 @@
 
 <header class="blue-header">
     <div class="nav-container">
-        <!-- Mobile Menu Icon (Left) -->
+        <!-- Mobile Menu Icon -->
         <i class="bi bi-list mobile-menu-btn" data-bs-toggle="offcanvas" data-bs-target="#mobileMenu"></i>
 
         <!-- Left/Center Navigation -->
         <div class="d-flex align-items-center gap-4 left-nav">
-            <!-- Logo area -->
             <a href="{{ route('products.index') }}" class="d-flex align-items-center text-decoration-none text-dark me-3">
                 <i class="bi bi-bag-fill fs-4 me-2"></i>
                 <span class="fw-bold fs-5" style="letter-spacing: -0.5px;">MyStore</span>
             </a>
 
-            <!-- Search Bar (Added) -->
             <div class="search-bar-container" id="searchBar">
                  <form action="{{ route('products.index') }}" class="d-flex justify-content-center w-100">
                      <div class="position-relative" style="width: 100%; max-width: 600px;">
-                        <input type="text" name="search" class="search-input-header" placeholder="Search for products, brands and more" value="{{ request('search') }}">
+                        <input type="text" name="search" class="search-input-header" placeholder="Search products..." value="{{ request('search') }}">
                         <button type="submit" class="position-absolute top-50 end-0 translate-middle-y border-0 bg-transparent pe-3 text-primary">
                             <i class="bi bi-search"></i>
                         </button>
@@ -151,7 +85,6 @@
                  </form>
             </div>
 
-            <!-- Links -->
             <nav class="d-flex align-items-center gap-2">
                 <a href="{{ route('products.index') }}" class="nav-link-custom {{ request()->routeIs('products.index') ? 'active' : '' }}">Home</a>
                 <a href="{{ route('about') }}" class="nav-link-custom {{ request()->routeIs('about') ? 'active' : '' }}">About</a>
@@ -161,11 +94,12 @@
 
         <!-- Right Side Icons -->
         <div class="right-nav">
-
-
+            @php 
+                $cartItems = session('cart', []);
+                $cartCount = is_countable($cartItems) ? count($cartItems) : 0;
+            @endphp
             <a href="{{ route('cart.index') }}" class="right-item position-relative">
                 <i class="bi bi-bag-fill"></i>
-                @php $cartCount = count(session('cart', [])); @endphp
                 @if($cartCount > 0)
                     <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size: 0.6rem;">
                         {{ $cartCount }}
@@ -173,7 +107,7 @@
                 @endif
             </a>
 
-            @auth
+            @if(auth()->check())
                 <div class="dropdown">
                     <a href="#" class="d-flex align-items-center text-decoration-none" data-bs-toggle="dropdown">
                         <img src="{{ auth()->user()->profile_photo_url }}" 
@@ -182,9 +116,13 @@
                              style="width: 40px; height: 40px; object-fit: cover; border: 2px solid #fff; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
                     </a>
                     <ul class="dropdown-menu dropdown-menu-end shadow border-0">
+                        <li><a class="dropdown-item" href="{{ route('admin.dashboard') }}">Dashboard</a></li>
                         <li><a class="dropdown-item" href="{{ route('profile.edit') }}">Profile</a></li>
                         <li><a class="dropdown-item" href="{{ route('orders.index') }}">Orders</a></li>
                         <li><hr class="dropdown-divider"></li>
+                        @if(auth()->user()->isAdmin())
+                            <li><a class="dropdown-item text-primary" href="{{ route('admin.products.list') }}">Admin: Products</a></li>
+                        @endif
                         <li>
                             <form action="{{ route('logout') }}" method="POST">
                                 @csrf
@@ -198,7 +136,7 @@
                     <i class="bi bi-person-fill"></i>
                     <span>Login</span>
                 </a>
-            @endauth
+            @endif
         </div>
     </div>
 </header>
@@ -212,9 +150,19 @@
   <div class="offcanvas-body">
     <div class="d-grid gap-2">
         <a href="{{ route('products.index') }}" class="btn {{ request()->routeIs('products.index') ? 'btn-primary' : 'btn-outline-dark' }} text-start border-0 fw-bold">Home</a>
-        <a href="{{ route('products.index') }}" class="btn btn-outline-dark text-start border-0">Shop</a>
         <a href="{{ route('about') }}" class="btn {{ request()->routeIs('about') ? 'btn-primary' : 'btn-outline-dark' }} text-start border-0 fw-bold">About</a>
         <a href="{{ route('contact') }}" class="btn {{ request()->routeIs('contact') ? 'btn-primary' : 'btn-outline-dark' }} text-start border-0 fw-bold">Contact</a>
+        @if(auth()->check())
+             <a href="{{ route('admin.dashboard') }}" class="btn btn-outline-primary text-start border-0 fw-bold">Dashboard</a>
+             <div class="border-top pt-2 mt-2">
+                 <form action="{{ route('logout') }}" method="POST">
+                     @csrf
+                     <button class="btn btn-outline-danger w-100">Logout</button>
+                 </form>
+             </div>
+        @else
+             <a href="{{ route('login') }}" class="btn btn-outline-primary w-100">Login</a>
+        @endif
     </div>
   </div>
 </div>
