@@ -94,7 +94,15 @@ ob_start();
                         </div>
                         <div class="d-flex flex-column gap-2">
                             <?php
-                            $cats = ['Mobile Phones','Laptops','Tablets','Smart Watches','Headphones','Cameras','TVs','Gaming','Fashion','Shoes','Bags','Watches','Furniture','Home Decor','Kitchen','Sports','Gym & Fitness','Vehicles','Cars','Bikes','Accessories','Fruits','Vegetables','Groceries','Books','Toys','Other'];
+                            // Use dynamic categories from router/layout
+                            $cats = $categories ?? [];
+                            // Ensure flat array of strings if it's objects
+                            if(is_array($cats) || $cats instanceof \Traversable) {
+                                $cats = collect($cats)->map(function($c){ return is_object($c) ? ($c->name ?? 'Unknown') : $c; })->toArray();
+                            } else {
+                                $cats = [];
+                            }
+                            
                             foreach($cats as $cat):
                             ?>
                                 <a href="<?= route('products.index', array_merge(request()->all(), ['category' => $cat])) ?>" 

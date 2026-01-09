@@ -7,7 +7,7 @@ $order = isset($order) ? $order : null;
 if (!$order) {
     echo "<div class='container py-5 text-center'><h3>Order not found</h3><a href='/orders' class='btn btn-primary'>Back to Orders</a></div>";
     $content = ob_get_clean();
-    include __DIR__ . '/../../layouts/master.php';
+    include __DIR__ . '/../layouts/master.php';
     exit;
 }
 ?>
@@ -170,5 +170,5 @@ if (!$order) {
 <?php 
 $content = ob_get_clean();
 // Include Master
-include __DIR__ . '/../../layouts/master.php';
+include __DIR__ . '/../layouts/master.php';
 ?>

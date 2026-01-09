@@ -211,6 +211,11 @@ if ($uri === '/' || $uri === '/products' || $uri === '/index.php') {
     $viewName = 'cart.index';
     $data['cartItems'] = $_SESSION['cart'] ?? [];
 
+} elseif ($uri === '/about') {
+    $viewName = 'pages.about';
+} elseif ($uri === '/contact') {
+    $viewName = 'pages.contact';
+
 } elseif ($uri === '/checkout') {
     $viewName = 'checkout.index';
     $data['items'] = $_SESSION['cart'] ?? [];

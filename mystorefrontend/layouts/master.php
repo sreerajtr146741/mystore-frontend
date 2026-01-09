@@ -154,8 +154,8 @@
             <!-- Links -->
             <nav class="d-flex align-items-center gap-2">
                 <a href="<?= route('products.index') ?>" class="nav-link-custom active">Home</a>
-                <a href="#" class="nav-link-custom">About</a>
-                <a href="#" class="nav-link-custom">Contact</a>
+                <a href="/about" class="nav-link-custom">About</a>
+                <a href="/contact" class="nav-link-custom">Contact</a>
             </nav>
         </div>
 

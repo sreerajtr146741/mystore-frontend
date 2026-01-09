@@ -117,5 +117,5 @@ ob_start();
 $content = ob_get_clean();
 
 // Include Layout
-include __DIR__ . '/../../layouts/master.php';
+include __DIR__ . '/../layouts/master.php';
 ?>

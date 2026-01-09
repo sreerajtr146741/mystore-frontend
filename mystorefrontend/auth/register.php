@@ -165,9 +165,9 @@
                     </button>
                 </form>
 
-                <p class="mt-8 text-center text-white/90 font-medium drop-shadow-md">
+                <p class="mt-8 text-center text-gray-600 font-medium drop-shadow-md">
                     Already have an account?
-                    <a href="<?= route('login') ?>" class="text-white font-bold hover:text-indigo-100 hover:underline">Login here</a>
+                    <a href="<?= route('login') ?>" class="text-indigo-600 font-bold hover:text-indigo-700 hover:underline">Login here</a>
                 </p>
             </div>
         </div>

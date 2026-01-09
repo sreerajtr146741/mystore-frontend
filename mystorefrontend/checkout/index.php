@@ -409,5 +409,5 @@ ob_start();
 <?php
 $scripts = ob_get_clean();
 
-include __DIR__ . '/../../layouts/master.php';
+include __DIR__ . '/../layouts/master.php';
 ?>
