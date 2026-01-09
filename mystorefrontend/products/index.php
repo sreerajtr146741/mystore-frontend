@@ -71,32 +71,32 @@ ob_start();
                 <div class="card-header bg-white border-bottom py-3">
                     <h5 class="mb-0 fw-bold">Filters</h5>
                 </div>
-                <div class="card-body p-0">
-                    <!-- Search Filter -->
-                    <div class="p-3 border-bottom">
-                        <h6 class="text-uppercase text-muted small fw-bold mb-3">Search</h6>
+                <div class="card-body p-0 bg-white rounded-3 shadow-sm">
+                    <!-- Search Filter (Kept as requested 'bellow the search bar') -->
+                    <div class="p-4 border-bottom">
                         <form action="<?= route('products.index') ?>" method="GET">
-                            <!-- Removed hidden category input to make sidebar search global per user request -->
-                            <div class="input-group">
-                                <input type="text" name="search" class="form-control form-control-sm" placeholder="Search products..." value="<?= request('search') ?>">
-                                <button type="submit" class="btn btn-primary btn-sm"><i class="bi bi-search"></i></button>
+                            <div class="position-relative">
+                                <input type="text" name="search" class="form-control ps-5 border-0 bg-light rounded-pill" placeholder="Search..." value="<?= request('search') ?>" style="height: 45px;">
+                                <i class="bi bi-search position-absolute top-50 start-0 translate-middle-y ms-3 text-muted"></i>
                             </div>
                         </form>
                     </div>
 
                     <!-- Categories Filter -->
-                    <div class="p-3">
-                        <div class="d-flex justify-content-between align-items-center mb-2">
-                            <h6 class="text-uppercase text-muted small fw-bold mb-0">Categories</h6>
-                            <?php if(request('category')): ?>
-                                <a href="<?= route('products.index') ?>" class="small text-decoration-none text-danger">Clear</a>
-                            <?php endif; ?>
-                        </div>
-                        <div class="d-flex flex-column gap-2">
+                    <div class="p-4">
+                        <h6 class="text-uppercase fw-bold text-secondary mb-3" style="font-size: 0.85rem; letter-spacing: 0.5px;">Categories</h6>
+                        
+                        <?php if(request('category')): ?>
+                            <div class="mb-3">
+                                <a href="<?= route('products.index') ?>" class="badge bg-danger text-white text-decoration-none px-3 py-2 rounded-pill">
+                                    Clear Filter <i class="bi bi-x-circle ms-1"></i>
+                                </a>
+                            </div>
+                        <?php endif; ?>
+
+                        <div class="d-flex flex-column gap-1">
                             <?php
-                            // Use dynamic categories from router/layout
                             $cats = $categories ?? [];
-                            // Ensure flat array of strings if it's objects
                             if(is_array($cats) || $cats instanceof \Traversable) {
                                 $cats = collect($cats)->map(function($c){ return is_object($c) ? ($c->name ?? 'Unknown') : $c; })->toArray();
                             } else {
@@ -106,21 +106,21 @@ ob_start();
                             foreach($cats as $cat):
                             ?>
                                 <a href="<?= route('products.index', array_merge(request()->all(), ['category' => $cat])) ?>" 
-                                   class="text-decoration-none <?= request('category') === $cat ? 'fw-bold text-primary' : 'text-dark' ?>"
-                                   style="font-size: 0.95rem;">
-                                   <div class="d-flex align-items-center">
-                                       <?php if(request('category') === $cat): ?>
-                                        <i class="bi bi-check2 me-2"></i>
-                                       <?php else: ?>
-                                        <i class="bi bi-chevron-right me-2 text-muted" style="font-size: 0.75rem;"></i>
-                                       <?php endif; ?>
-                                       <?= $cat ?>
-                                   </div>
+                                   class="d-flex align-items-center text-decoration-none py-2 px-2 rounded transition-all <?= request('category') === $cat ? 'text-primary bg-primary bg-opacity-10 fw-bold' : 'text-dark hover-bg-light' ?>"
+                                   style="font-size: 0.95rem; transition: all 0.2s;">
+                                   
+                                   <i class="bi bi-chevron-right me-3 text-secondary" style="font-size: 0.75rem; width: 15px;"></i>
+                                   <span class="<?= request('category') === $cat ? '' : 'text-secondary' ?>"><?= $cat ?></span>
                                 </a>
                             <?php endforeach; ?>
                         </div>
                     </div>
                 </div>
+                
+                <style>
+                    .hover-bg-light:hover { background-color: #f8f9fa; color: #000 !important; }
+                    .hover-bg-light:hover i { color: #000 !important; }
+                </style>
             </div>
         </div>
 
@@ -218,8 +218,8 @@ ob_start();
                 <div class="card border-0 shadow-sm py-5 text-center">
                     <div class="card-body">
                         <img src="https://static-assets-web.flixcart.com/fk-p-linchpin-web/fk-cp-zion/img/error-no-search-results_2353c5.png" alt="No Results" class="mb-4" style="max-width: 200px;">
-                        <h4>Sorry, no results found!</h4>
-                        <p class="text-muted">Please check the spelling or try searching for something else</p>
+                        <h4>No products found</h4>
+                        <p class="text-muted">We couldn't find any products matching your criteria.</p>
                     </div>
                 </div>
             <?php endif; ?>

@@ -139,14 +139,18 @@ $data['platform_fee'] = 0;
 // Fetch Global Categories (Cached in session)
 if (!isset($_SESSION['categories'])) {
     $catRes = api_client('categories'); 
-    $_SESSION['categories'] = $catRes->data ?? [
-        'Mobile Phones', 'Laptops', 'Tablets', 'Smart Watches', 'Headphones', 
-        'Cameras', 'Televisions', 'Gaming Consoles', 'Men\'s Fashion', 'Women\'s Fashion', 
-        'Kids\' Fashion', 'Footwear', 'Watches', 'Bags & Luggage', 'Home Decor', 
-        'Kitchenware', 'Furniture', 'Lighting', 'Beauty & Personal Care', 'Health & Wellness', 
-        'Sports & Fitness', 'Toys & Games', 'Books', 'Stationery', 'Automotive', 
-        'Groceries', 'Pet Supplies', 'Musical Instruments'
-    ]; 
+    $fetchedCats = $catRes->data ?? [];
+    if (empty($fetchedCats)) {
+        $fetchedCats = [
+            'Mobile Phones', 'Laptops', 'Tablets', 'Smart Watches', 'Headphones', 
+            'Cameras', 'Televisions', 'Gaming Consoles', 'Men\'s Fashion', 'Women\'s Fashion', 
+            'Kids\' Fashion', 'Footwear', 'Watches', 'Bags & Luggage', 'Home Decor', 
+            'Kitchenware', 'Furniture', 'Lighting', 'Beauty & Personal Care', 'Health & Wellness', 
+            'Sports & Fitness', 'Toys & Games', 'Books', 'Stationery', 'Automotive', 
+            'Groceries', 'Pet Supplies', 'Musical Instruments'
+        ]; 
+    }
+    $_SESSION['categories'] = $fetchedCats;
 }
 $data['categories'] = $_SESSION['categories'];
 $data['allCategories'] = []; // For admin select (transform if needed)
