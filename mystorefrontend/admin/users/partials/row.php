@@ -13,13 +13,7 @@
                 <span class="badge badge-blocked">Blocked</span>
             @endif
         </td>
-        <td>
-            @if(isset($user->created_at) && $user->created_at instanceof \DateTimeInterface)
-                {{ $user->created_at->format('M d, Y') }}
-            @else
-                {{ $user->joined ?? $user->created_at ?? 'N/A' }}
-            @endif
-        </td>
+        <td>{{ $user->created_at->format('M d, Y') }}</td>
         <td class="text-end">
             @if($user->email !== 'admin@store.com')
                 <div class="btn-group btn-group-sm">

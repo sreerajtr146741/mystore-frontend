@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MyStore - {{ auth()->user()->name }}</title>
+    <title>MyStore<?= auth()->check() ? ' - ' . auth()->user()->name : '' ?></title>
     <!-- Bootstrap 5 & Icons -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
@@ -22,62 +22,62 @@
     <!-- Bootstrap Navbar (Copied from Product Page) -->
     <nav class="navbar navbar-expand-lg bg-white shadow-sm mb-4">
         <div class="container">
-            <a class="navbar-brand fw-bold" href="{{ route('products.index') }}"><i class="fas fa-shopping-bag me-2"></i>MyStore</a>
+            <a class="navbar-brand fw-bold" href="<?= route('products.index') ?>"><i class="fas fa-shopping-bag me-2"></i>MyStore</a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#topNav">
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="topNav">
                 <ul class="navbar-nav me-auto"></ul>
 
-                {{-- Cart --}}
-                <a href="{{ route('cart.index') }}" class="position-relative me-3 text-decoration-none text-dark" aria-label="Cart">
+                <!-- Cart -->
+                <a href="<?= route('cart.index') ?>" class="position-relative me-3 text-decoration-none text-dark" aria-label="Cart">
                     <i class="bi bi-cart fs-4"></i>
-                    @php $cart = session('cart', []); @endphp
-                    @if(!empty($cart))
+                    <?php $cart = session('cart', []); ?>
+                    <?php if(!empty($cart)): ?>
                         <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
-                            {{ count($cart) }}
+                            <?= count($cart) ?>
                         </span>
-                    @endif
+                    <?php endif; ?>
                 </a>
 
-                {{-- Profile Dropdown --}}
-                @auth
+                <!-- Profile Dropdown -->
+                <?php if(auth()->check()): ?>
                     <div class="dropdown">
                         <a href="#" class="d-flex align-items-center text-decoration-none" data-bs-toggle="dropdown">
-                            <img src="{{ auth()->user()->profile_photo_url }}" 
-                                 alt="{{ auth()->user()->name }}"
+                            <img src="<?= auth()->user()->profile_photo_url ?>" 
+                                 alt="<?= auth()->user()->name ?>"
                                  class="rounded-circle"
                                  style="width: 40px; height: 40px; object-fit: cover; border: 2px solid #e5e7eb; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
                         </a>
                         <ul class="dropdown-menu dropdown-menu-end">
-                            <li><a class="dropdown-item" href="{{ route('profile.edit') }}">Edit Profile</a></li>
-                            <li><a class="dropdown-item" href="{{ route('orders.index') }}">My Orders</a></li>
+                            <li><a class="dropdown-item" href="<?= route('profile.edit') ?>">Edit Profile</a></li>
+                            <li><a class="dropdown-item" href="<?= route('orders.index') ?>">My Orders</a></li>
                             <li><hr class="dropdown-divider"></li>
 
                             <li>
-                                <form method="POST" action="{{ route('logout') }}">
-                                    @csrf
+                                <form method="POST" action="<?= route('logout') ?>">
+                                    <?= csrf_field() ?>
                                     <button class="dropdown-item text-danger">Logout</button>
                                 </form>
                             </li>
                         </ul>
                     </div>
-                @else
-                    <a href="{{ route('login') }}" class="btn btn-outline-primary me-2">Login</a>
-                    <a href="{{ route('register') }}" class="btn btn-primary">Register</a>
-                @endauth
+                <?php else: ?>
+                    <a href="<?= route('login') ?>" class="btn btn-outline-primary me-2">Login</a>
+                    <a href="<?= route('register') ?>" class="btn btn-primary">Register</a>
+                <?php endif; ?>
             </div>
         </div>
     </nav>
 
     <main class="max-w-7xl mx-auto px-4 py-8">
-        @if(session('success'))
+        <?php if(session('success')): ?>
             <div class="bg-green-100 border border-green-400 text-green-700 px-6 py-4 rounded-lg mb-6 flex items-center">
-                <i class="fas fa-check-circle mr-3"></i> {{ session('success') }}
+                <i class="fas fa-check-circle mr-3"></i> <?= session('success') ?>
             </div>
-        @endif
+        <?php endif; ?>
 
-        @yield('content')
+        <?php echo $content ?? ''; ?>
     </main>
     <script>
         // Auto-dismiss alerts after 5 seconds
