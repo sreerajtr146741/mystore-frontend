@@ -156,10 +156,10 @@ $data['categories'] = $_SESSION['categories'];
 $data['allCategories'] = []; // For admin select (transform if needed)
 
 // --- ROUTE SWITCHING ---
-$viewName = 'products.index'; 
+$viewName = null; // Changed from default 'products.index' to null to detect 404
+$data['products'] = collect([]); // Prevent undefined variable error
 
 if ($uri === '/' || $uri === '/products' || $uri === '/index.php') {
-    // Products Index
     $viewName = 'products.index';
     $queryParams = http_build_query($_GET);
     $apiRes = api_client("products?$queryParams");
