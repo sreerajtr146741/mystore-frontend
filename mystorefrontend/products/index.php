@@ -189,7 +189,7 @@ ob_start();
             <?php if($products->count()): ?>
                 <div class="row g-2" id="product-grid">
                      <!-- Using standard card layout, slightly compact for 'shop' feel -->
-                    <?php include __DIR__ . '/../../partials/product-list.php'; ?>
+                    <?php include __DIR__ . '/../partials/product-list.php'; ?>
                 </div>
 
                 <!-- Loader for Infinite Scroll -->
@@ -289,5 +289,5 @@ ob_start();
 $scripts = ob_get_clean();
 
 // 4. Include Master Layout
-include __DIR__ . '/../../layouts/master.php';
+include __DIR__ . '/../layouts/master.php';
 ?>
