@@ -339,7 +339,8 @@ if ($uri === '/' || $uri === '/products' || $uri === '/index.php') {
 
     } elseif ($uri === '/admin/products/manage') {
         $viewName = 'admin.products.manage';
-        $res = api_client('products'); // Or admin/products
+        $queryParams = http_build_query($_GET);
+        $res = api_client("products?$queryParams"); // Pass filters to API
         $data['products'] = collect($res->data ?? []);
         // Setup simple pagination on this collection if needed
         if (!method_exists($data['products'], 'hasMorePages')) {
