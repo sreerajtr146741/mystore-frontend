@@ -67,62 +67,43 @@ ob_start();
     <div class="row g-3">
         <!-- Sidebar Filters -->
         <div class="col-lg-3 col-xl-2" style="position: sticky; top: 80px; height: fit-content; z-index: 1;">
-            <div class="card border-0 shadow-sm">
-                <div class="card-header bg-white border-bottom py-3">
-                    <h5 class="mb-0 fw-bold">Filters</h5>
-                </div>
-                <div class="card-body p-0 bg-white rounded-3 shadow-sm">
-                    <!-- Search Filter (Kept as requested 'bellow the search bar') -->
-                    <div class="p-4 border-bottom">
-                        <form action="<?= route('products.index') ?>" method="GET">
-                            <div class="position-relative">
-                                <input type="text" name="search" class="form-control ps-5 border-0 bg-light rounded-pill" placeholder="Search..." value="<?= request('search') ?>" style="height: 45px;">
-                                <i class="bi bi-search position-absolute top-50 start-0 translate-middle-y ms-3 text-muted"></i>
-                            </div>
-                        </form>
-                    </div>
-
-                    <!-- Categories Filter -->
-                    <div class="p-4">
-                        <h6 class="text-uppercase fw-bold text-secondary mb-3" style="font-size: 0.85rem; letter-spacing: 0.5px;">Categories</h6>
-                        
-                        <?php if(request('category')): ?>
-                            <div class="mb-3">
-                                <a href="<?= route('products.index') ?>" class="badge bg-danger text-white text-decoration-none px-3 py-2 rounded-pill">
-                                    Clear Filter <i class="bi bi-x-circle ms-1"></i>
-                                </a>
-                            </div>
-                        <?php endif; ?>
-
-                        <div class="d-flex flex-column gap-1">
-                            <?php
-                            $cats = $categories ?? [];
-                            if(is_array($cats) || $cats instanceof \Traversable) {
-                                $cats = collect($cats)->map(function($c){ return is_object($c) ? ($c->name ?? 'Unknown') : $c; })->toArray();
-                            } else {
-                                $cats = [];
-                            }
-                            
-                            foreach($cats as $cat):
-                            ?>
-                                <a href="<?= route('products.index', array_merge(request()->all(), ['category' => $cat])) ?>" 
-                                   class="d-flex align-items-center text-decoration-none py-2 px-2 rounded transition-all <?= request('category') === $cat ? 'text-primary bg-primary bg-opacity-10 fw-bold' : 'text-dark hover-bg-light' ?>"
-                                   style="font-size: 0.95rem; transition: all 0.2s;">
-                                   
-                                   <i class="bi bi-chevron-right me-3 text-secondary" style="font-size: 0.75rem; width: 15px;"></i>
-                                   <span class="<?= request('category') === $cat ? '' : 'text-secondary' ?>"><?= $cat ?></span>
-                                </a>
-                            <?php endforeach; ?>
-                        </div>
-                    </div>
-                </div>
+            <div class="p-0 bg-white" style="border-right: 1px solid #eee; min-height: 80vh;"> <!-- Simulated full height look -->
                 
-                <style>
-                    .hover-bg-light:hover { background-color: #f8f9fa; color: #000 !important; }
-                    .hover-bg-light:hover i { color: #000 !important; }
-                </style>
+                <!-- Categories Header -->
+                <div class="pt-2 pb-2 ps-1">
+                    <h6 class="text-uppercase fw-bold text-dark mb-3" style="font-size: 0.9rem; letter-spacing: 0.5px; opacity: 0.8;">CATEGORIES</h6>
+                </div>
+
+                <!-- Category List -->
+                <div class="d-flex flex-column">
+                    <?php
+                    $cats = $categories ?? [];
+                    if(is_array($cats) || $cats instanceof \Traversable) {
+                        $cats = collect($cats)->map(function($c){ return is_object($c) ? ($c->name ?? 'Unknown') : $c; })->toArray();
+                    } else {
+                        $cats = [];
+                    }
+                    
+                    foreach($cats as $cat):
+                    ?>
+                        <a href="<?= route('products.index', array_merge(request()->all(), ['category' => $cat])) ?>" 
+                           class="d-flex align-items-center text-decoration-none py-2 ps-1 pe-2 rounded transition-all <?= request('category') === $cat ? 'text-primary' : 'text-dark default-cat-link' ?>"
+                           style="font-size: 1rem; margin-bottom: 2px;">
+                           
+                           <span class="me-2 text-secondary d-flex align-items-center justify-content-center" style="width: 20px; height: 20px;">
+                                <i class="bi bi-chevron-right" style="font-size: 0.75rem; -webkit-text-stroke: 1px;"></i>
+                           </span>
+                           <span class="<?= request('category') === $cat ? 'fw-bold' : '' ?>" style="font-weight: 400;"><?= $cat ?></span>
+                        </a>
+                    <?php endforeach; ?>
+                </div>
             </div>
         </div>
+
+        <style>
+            .default-cat-link:hover { color: #2563eb !important; }
+            .default-cat-link:hover i { color: #2563eb !important; }
+        </style>
 
         <!-- Product Grid -->
         <div class="col-lg-9 col-xl-10">
