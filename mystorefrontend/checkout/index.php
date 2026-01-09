@@ -1,8 +1,7 @@
-@extends('layouts.master')
-
-@section('title', 'Checkout')
-
-@push('styles')
+<?php
+// Capture Styles
+ob_start();
+?>
 <style>
     body { background-color: #f1f3f6; } /* Flipkart-like grey background */
     
@@ -100,82 +99,81 @@
     .form-floating input, .form-floating textarea { border-radius: 2px; border: 1px solid #e0e0e0; }
     .form-floating input:focus, .form-floating textarea:focus { border-color: #2874f0; box-shadow: none; }
 </style>
-@endpush
+<?php
+$styles = ob_get_clean();
 
-@section('content')
-@php
-    $user = auth()->user();
-    
-    // Use items passed from controller (already normalized)
-    // Convert to object for Blade syntax compatibility ($item->name)
-    $items = collect($items)->map(function($item, $key) {
-         $item['id'] = $key; // Ensure ID matches array index for removal
-         return (object)$item;
-    });
-    
-    // Calculations are already done in controller but we need variables for display if not passed?
-    // Controller passes: subtotal, shipping, discount, total.
-    // So we don't need to recalculate them here.
-    
-    // We already have $subtotal, $shipping, $discount, $total from controller.
-    // But we need to ensure they are available as variables if View::share wasn't used.
-    // The controller passes them in generic array.
-    
-    $prefillName = old('full_name', $user->first_name . ' ' . $user->last_name);
-    $prefillPhone = old('phone', $user->phone);
-    $prefillEmail = old('email', $user->email);
-    $prefillAddress = old('address', $user->address);
-@endphp
+// Capture Content
+ob_start();
+
+$user = auth()->user();
+
+// Ensure $items is an array and prepare it
+$itemsArray = isset($items) ? $items : [];
+if (!is_array($itemsArray)) $itemsArray = [];
+
+$itemObjects = [];
+foreach($itemsArray as $key => $item) {
+    if (!is_array($item)) continue;
+    $item['id'] = $key; // Ensure ID matches array index for removal/logic
+    $itemObjects[] = (object) $item;
+}
+
+$prefillName = old('full_name', ($user->first_name ?? '') . ' ' . ($user->last_name ?? ''));
+$prefillPhone = old('phone', $user->phone ?? '');
+$prefillEmail = old('email', $user->email ?? '');
+// Limit address length for preview
+$rawAddress = $user->address ?? '';
+$shortAddress = strlen($rawAddress) > 40 ? substr($rawAddress, 0, 40).'...' : $rawAddress;
+$prefillAddress = old('address', $rawAddress);
+?>
 
 <div class="container-fluid checkout-container">
     <div class="row">
         <!-- LEFT COLUMN: STEPS -->
         <div class="col-lg-8">
             
-            <form action="{{ route('checkout.proceed') }}" method="POST" id="checkoutForm">
-                @csrf
+            <form action="<?= route('checkout.proceed') ?>" method="POST" id="checkoutForm">
+                <?= csrf_field() ?>
                 <!-- Hidden Totals -->
-                <input type="hidden" name="subtotal" value="{{ $subtotal }}">
-                <input type="hidden" name="shipping" value="{{ $shipping }}">
-                <input type="hidden" name="discount" value="{{ $discount }}">
-                <input type="hidden" name="total" value="{{ $total }}">
-                <!-- STEP 1: DELIVERY ADDRESS (Completed style showing details) -->
+                <input type="hidden" name="subtotal" value="<?= $subtotal ?? 0 ?>">
+                <input type="hidden" name="shipping" value="<?= $shipping ?? 0 ?>">
+                <input type="hidden" name="discount" value="<?= $discount ?? 0 ?>">
+                <input type="hidden" name="total" value="<?= $total ?? 0 ?>">
+                
+                <!-- STEP 1: DELIVERY ADDRESS -->
                 <div class="step-section completed" id="step1">
                     <div class="step-header d-flex align-items-center" id="header1">
                         <div class="step-number">1</div>
                         <div>
                             <span class="title d-block">DELIVERY ADDRESS</span>
-                            <span class="text-dark small fw-bold" id="preview-name">{{ $user->first_name }} {{ $user->last_name }}</span>
-                            <span class="text-muted small ms-2" id="preview-address">({{ substr($user->address, 0, 40) }}...)</span>
+                            <span class="text-dark small fw-bold" id="preview-name"><?= $prefillName ?></span>
+                            <span class="text-muted small ms-2" id="preview-address">(<?= $shortAddress ?>)</span>
                         </div>
                         <button type="button" class="btn-change ms-auto" onclick="goToStep(1)"><i class="bi bi-pencil-square fs-5"></i></button>
                     </div>
                     <div class="step-body" id="body1">
-                        <!-- Address Form (Initially hidden since we start at Summary?) -->
-                         <!-- Actually, usually user confirms address first. 
-                              But images show Summary as active. So I'll make Address 'completed'. -->
                         <div class="row g-3">
                             <div class="col-md-6">
                                 <div class="form-floating">
-                                    <input type="text" name="full_name" class="form-control" id="fName" placeholder="Full Name" value="{{ $prefillName }}" required>
+                                    <input type="text" name="full_name" class="form-control" id="fName" placeholder="Full Name" value="<?= $prefillName ?>" required>
                                     <label for="fName">Full Name</label>
                                 </div>
                             </div>
                             <div class="col-md-6">
                                 <div class="form-floating">
-                                    <input type="tel" name="phone" class="form-control" id="fPhone" placeholder="10-digit mobile number" value="{{ old('phone', $user->phoneno) }}" required>
+                                    <input type="tel" name="phone" class="form-control" id="fPhone" placeholder="10-digit mobile number" value="<?= $prefillPhone ?>" required>
                                     <label for="fPhone">10-digit mobile number</label>
                                 </div>
                             </div>
                             <div class="col-12">
                                 <div class="form-floating">
-                                    <input type="email" name="email" class="form-control" id="fEmail" placeholder="Email (for order updates)" value="{{ $prefillEmail }}" required>
+                                    <input type="email" name="email" class="form-control" id="fEmail" placeholder="Email (for order updates)" value="<?= $prefillEmail ?>" required>
                                     <label for="fEmail">Email (for order updates)</label>
                                 </div>
                             </div>
                             <div class="col-12">
                                 <div class="form-floating">
-                                    <textarea name="address" class="form-control" id="fAddress" style="height: 100px" placeholder="Full Address (House No, Building, Street, Area)" required>{{ $prefillAddress }}</textarea>
+                                    <textarea name="address" class="form-control" id="fAddress" style="height: 100px" placeholder="Full Address (House No, Building, Street, Area)" required><?= $prefillAddress ?></textarea>
                                     <label for="fAddress">Full Address (House No, Building, Street, Area)</label>
                                 </div>
                             </div>
@@ -189,70 +187,68 @@
                 <!-- STEP 2: ORDER SUMMARY -->
                 <div class="step-section active" id="step2">
                     <div class="step-header active" id="header2">
-                        <div class="step-number">1</div> <!-- Matching reference numbering if preferred, but I'll use 2 -->
+                        <div class="step-number">2</div>
                         <span class="title">ORDER SUMMARY</span>
                     </div>
-                    <script>document.getElementById('header2').querySelector('.step-number').innerText = '2';</script>
                     
                     <div class="step-body show" id="body2" style="padding: 0;">
-                        @forelse($items as $item)
-                        <div class="item-row d-flex px-4">
-                            <!-- Image and Quantity Section -->
-                            <div class="flex-shrink-0 text-center" style="width: 112px;">
-                                @if(\Illuminate\Support\Str::startsWith($item->image, 'http'))
-                                    <img src="{{ $item->image }}" class="item-image mb-2" alt="Product">
-                                @else
-                                    <img src="{{ asset('storage/'.$item->image) }}" class="item-image mb-2" alt="Product">
-                                @endif
-                                
-                                <div class="qty-control justify-content-center">
-                                    <button type="button" class="qty-btn" onclick="updateQty('{{ $item->id }}', -1)">−</button>
-                                    <input type="text" class="qty-input" id="qty-{{ $item->id }}" value="{{ $item->qty }}" readonly>
-                                    <button type="button" class="qty-btn" onclick="updateQty('{{ $item->id }}', 1)">+</button>
-                                </div>
-                            </div>
-
-                            <!-- Details Section -->
-                            <div class="item-details flex-grow-1 ps-4">
-                                <h5 class="mb-1 text-dark" style="font-size: 16px; font-weight: 400; line-height: 1.2;">{{ $item->name }}</h5>
-                                <div class="text-muted mb-2" style="font-size: 12px;">Seller: MyStore Official</div>
-                                
-                                <div class="d-flex align-items-center mb-1">
-                                    <span class="price-old">₹{{ number_format($item->price * 1.5) }}</span>
-                                    <span class="price-final">₹{{ number_format($item->price) }}</span>
-                                    <span class="price-off">33% Off</span>
-                                </div>
-                                <div class="mb-3" style="font-size: 13px; color: #212121;">
-                                    Or Pay ₹{{ number_format($item->price * 0.9, 0) }} + <img src="https://static-assets-web.flixcart.com/fk-p-linchpin-web/fk-cp-zion/img/supercoin_fbd6a4.png" width="16" alt="coin"> {{ rand(100, 500) }}
-                                </div>
-
-                                <div class="mt-auto pt-2">
-                                    <!-- Remove button removed as requested -->
-                                </div>
-                            </div>
-
-                            <!-- Delivery Section -->
-                            <div class="text-end" style="min-width: 250px;">
-                                <div style="font-size: 14px; color: #212121;">
-                                    Delivery by {{ now()->addDays(5)->format('D M d') }} | <span class="text-success">FREE</span>
-                                </div>
-                            </div>
-                        </div>
-                        @empty
+                        <?php if(empty($itemObjects)): ?>
                             <div class="p-4 text-center text-muted">
                                 <p>No items in checkout.</p>
-                                <a href="{{ route('products.index') }}" class="btn btn-sm btn-primary">Continue Shopping</a>
+                                <a href="<?= route('products.index') ?>" class="btn btn-sm btn-primary">Continue Shopping</a>
                             </div>
-                        @endforelse
+                        <?php else: ?>
+                            <?php foreach($itemObjects as $item): 
+                                $imgSrc = $item->image;
+                                if(!filter_var($imgSrc, FILTER_VALIDATE_URL)) {
+                                    $imgSrc = '/storage/' . ltrim($imgSrc, '/');
+                                }
+                            ?>
+                            <div class="item-row d-flex px-4">
+                                <!-- Image and Quantity Section -->
+                                <div class="flex-shrink-0 text-center" style="width: 112px;">
+                                    <img src="<?= $imgSrc ?>" class="item-image mb-2" alt="Product">
+                                    
+                                    <div class="qty-control justify-content-center">
+                                        <button type="button" class="qty-btn" onclick="updateQty('<?= $item->id ?>', -1)">−</button>
+                                        <input type="text" class="qty-input" id="qty-<?= $item->id ?>" value="<?= $item->qty ?>" readonly>
+                                        <button type="button" class="qty-btn" onclick="updateQty('<?= $item->id ?>', 1)">+</button>
+                                    </div>
+                                </div>
 
-                        <!-- Summary Footer -->
-                        <div class="summary-footer d-flex align-items-center justify-content-between px-4 py-3" id="summaryFooter" style="box-shadow: 0 -2px 10px rgba(0,0,0,0.05); margin-top: 20px;">
-                            <div class="email-line" style="font-size: 14px;">
-                                <span class="text-muted">Order confirmation email will be sent to</span>
-                                <input type="text" value="{{ $user->email }}" readonly style="width: auto; margin-left:8px; border:none; border-bottom: 2px solid #2874f0; font-weight: 600; color: #212121; outline: none; padding: 0 4px;">
+                                <!-- Details Section -->
+                                <div class="item-details flex-grow-1 ps-4">
+                                    <h5 class="mb-1 text-dark" style="font-size: 16px; font-weight: 400; line-height: 1.2;"><?= $item->name ?></h5>
+                                    <div class="text-muted mb-2" style="font-size: 12px;">Seller: MyStore Official</div>
+                                    
+                                    <div class="d-flex align-items-center mb-1">
+                                        <span class="price-old">₹<?= number_format($item->price * 1.5) ?></span>
+                                        <span class="price-final">₹<?= number_format($item->price) ?></span>
+                                        <span class="price-off">33% Off</span>
+                                    </div>
+                                    <div class="mb-3" style="font-size: 13px; color: #212121;">
+                                        Or Pay ₹<?= number_format($item->price * 0.9, 0) ?> + <img src="https://static-assets-web.flixcart.com/fk-p-linchpin-web/fk-cp-zion/img/supercoin_fbd6a4.png" width="16" alt="coin"> <?= rand(100, 500) ?>
+                                    </div>
+                                </div>
+
+                                <!-- Delivery Section -->
+                                <div class="text-end" style="min-width: 250px;">
+                                    <div style="font-size: 14px; color: #212121;">
+                                        Delivery by <?= date('D M d', strtotime('+5 days')) ?> | <span class="text-success">FREE</span>
+                                    </div>
+                                </div>
                             </div>
-                            <button type="submit" class="btn-continue" style="min-width: 200px; padding: 14px 30px;">CONTINUE</button>
-                        </div>
+                            <?php endforeach; ?>
+
+                            <!-- Summary Footer -->
+                            <div class="summary-footer d-flex align-items-center justify-content-between px-4 py-3" id="summaryFooter" style="box-shadow: 0 -2px 10px rgba(0,0,0,0.05); margin-top: 20px;">
+                                <div class="email-line" style="font-size: 14px;">
+                                    <span class="text-muted">Order confirmation email will be sent to</span>
+                                    <input type="text" value="<?= $user->email ?? '' ?>" readonly style="width: auto; margin-left:8px; border:none; border-bottom: 2px solid #2874f0; font-weight: 600; color: #212121; outline: none; padding: 0 4px;">
+                                </div>
+                                <button type="submit" class="btn-continue" style="min-width: 200px; padding: 14px 30px;">CONTINUE</button>
+                            </div>
+                        <?php endif; ?>
                     </div>
                 </div>
 
@@ -264,29 +260,29 @@
             <div class="price-header px-4 py-2 bg-white border border-bottom-0">PRICE DETAILS</div>
             <div class="price-card p-4">
                 <div class="price-row">
-                    <span>Price ({{ count($items) }} item{{ count($items) > 1 ? 's' : '' }})</span>
-                    <span id="ui-subtotal">₹{{ number_format($subtotal) }}</span>
+                    <span>Price (<?= count($itemObjects) ?> item<?= count($itemObjects) > 1 ? 's' : '' ?>)</span>
+                    <span id="ui-subtotal">₹<?= number_format($subtotal ?? 0) ?></span>
                 </div>
                 <div class="price-row">
                     <span>Delivery Charges</span>
-                    @if($shipping > 0)
-                        <span class="text-dark">₹{{ number_format($shipping) }}</span>
-                    @else
+                    <?php if(($shipping ?? 0) > 0): ?>
+                        <span class="text-dark">₹<?= number_format($shipping) ?></span>
+                    <?php else: ?>
                         <span class="text-success">FREE</span>
-                    @endif
+                    <?php endif; ?>
                 </div>
                 <div class="price-row">
                     <span>Platform Fee</span>
-                    <span class="text-dark" id="ui-platform-fee">₹{{ number_format($platform_fee) }}</span>
+                    <span class="text-dark" id="ui-platform-fee">₹<?= number_format($platform_fee ?? 0) ?></span>
                 </div>
                 
                 <div class="total-row d-flex justify-content-between">
                     <span>Total Payable</span>
-                    <span id="ui-total">₹{{ number_format($total) }}</span>
+                    <span id="ui-total">₹<?= number_format($total ?? 0) ?></span>
                 </div>
                 
                 <div class="savings mt-3">
-                        Your Total Savings on this order <span id="ui-savings">₹{{ number_format($discount + ($subtotal * 0.5)) }}</span>
+                        Your Total Savings on this order <span id="ui-savings">₹<?= number_format(($discount ?? 0) + (($subtotal ?? 0) * 0.5)) ?></span>
                 </div>
             </div>
 
@@ -303,14 +299,12 @@
     </div>
 </div>
 
-<!-- Item remove forms -->
-@foreach($items as $item)
-    <form id="remove-{{ $item->id }}" action="{{ route('checkout.remove', $item->id) }}" method="POST" style="display:none;">
-        @csrf @method('DELETE')
-    </form>
-@endforeach
+<?php 
+$content = ob_get_clean();
 
-@push('scripts')
+// Capture Scripts
+ob_start(); 
+?>
 <script>
     function goToStep(step) {
         // Validation for Address (Step 1 in new renumbered flow)
@@ -376,12 +370,12 @@
 
         // AJAX update
         // We use a dummy ID '0' and replace it with the actual ID to prevent Route errors if id is missing in definition
-        const route = "{{ route('checkout.update_qty', 0) }}".replace('/0', '/' + id);
+        const route = "<?= route('checkout.update_qty', 0) ?>".replace('/0', '/' + id);
 
         fetch(route, {
             method: 'POST',
             headers: {
-                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                'X-CSRF-TOKEN': '<?= csrf_token() ?>',
                 'Content-Type': 'application/json',
                 'Accept': 'application/json'
             },
@@ -410,8 +404,10 @@
         if(pFee) pFee.innerText = '₹' + t.platform_fee.toLocaleString();
         if(tot) tot.innerText = '₹' + t.total.toLocaleString();
         if(sav) sav.innerText = '₹' + (t.discount + (t.subtotal * 0.5)).toLocaleString();
-        
-        // Update price hidden input? No need if server-side handles it on submit.
     }
 </script>
-@endpush
+<?php
+$scripts = ob_get_clean();
+
+include __DIR__ . '/../../layouts/master.php';
+?>

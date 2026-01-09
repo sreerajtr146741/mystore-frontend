@@ -1,8 +1,7 @@
-{{-- resources/views/auth/register.blade.php --}}
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Register • MyStore</title>
+    <title>Register - MyStore</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
@@ -70,8 +69,8 @@
                 <p class="text-center text-gray-600 mb-8">Fill in your details & verify with OTP</p>
 
                 <!-- Fixed Form: All required fields -->
-                <form action="{{ route('register') }}" method="POST" class="space-y-5">
-                    @csrf
+                <form action="<?= route('register') ?>" method="POST" class="space-y-5">
+                    <?= csrf_field() ?>
 
                     <div class="grid grid-cols-2 gap-4">
                         <div class="input-wrap">
@@ -80,7 +79,9 @@
                             </svg>
                             <input type="text" name="first_name" placeholder="First Name" required
                                    class="field w-full p-3.5 rounded-xl border">
-                            @error('first_name') <span class="text-red-500 text-xs mt-1 block">{{ $message }}</span> @enderror
+                            <?php if($errors->has('first_name')): ?>
+                                <span class="text-red-500 text-xs mt-1 block"><?= $errors->first('first_name') ?></span>
+                            <?php endif; ?>
                         </div>
                         <div class="input-wrap">
                             <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-indigo-600" viewBox="0 0 24 24" fill="currentColor">
@@ -88,7 +89,9 @@
                             </svg>
                             <input type="text" name="last_name" placeholder="Last Name" required
                                    class="field w-full p-3.5 rounded-xl border">
-                            @error('last_name') <span class="text-red-500 text-xs mt-1 block">{{ $message }}</span> @enderror
+                            <?php if($errors->has('last_name')): ?>
+                                <span class="text-red-500 text-xs mt-1 block"><?= $errors->first('last_name') ?></span>
+                            <?php endif; ?>
                         </div>
                     </div>
 
@@ -98,7 +101,9 @@
                         </svg>
                         <input type="email" name="email" placeholder="Email Address" required
                                class="field w-full p-3.5 rounded-xl border">
-                        @error('email') <span class="text-red-500 text-xs mt-1 block">{{ $message }}</span> @enderror
+                        <?php if($errors->has('email')): ?>
+                            <span class="text-red-500 text-xs mt-1 block"><?= $errors->first('email') ?></span>
+                        <?php endif; ?>
                     </div>
 
                     <div class="input-wrap">
@@ -107,9 +112,12 @@
                         </svg>
                         <input type="text" name="phone" placeholder="Phone Number" required
                                class="field w-full p-3.5 rounded-xl border">
-                        @error('phone') <span class="text-red-500 text-xs mt-1 block">{{ $message }}</span> @enderror
+                        <?php if($errors->has('phone')): ?>
+                            <span class="text-red-500 text-xs mt-1 block"><?= $errors->first('phone') ?></span>
+                        <?php endif; ?>
                     </div>
 
+                    <div class="relative">
                         <div class="relative">
                             <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-indigo-600 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" viewBox="0 0 24 24" fill="currentColor">
                                 <path d="M12 7a2 2 0 100-4 2 2 0 000 4z"/><path d="M12 9c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
@@ -127,10 +135,12 @@
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
                                 </svg>
                             </span>
-                             @error('password') <span class="text-red-500 text-xs mt-1 block">{{ $message }}</span> @enderror
+                            <?php if($errors->has('password')): ?>
+                                <span class="text-red-500 text-xs mt-1 block"><?= $errors->first('password') ?></span>
+                            <?php endif; ?>
                         </div>
 
-                        <div class="relative">
+                        <div class="relative mt-4">
                             <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-indigo-600 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" viewBox="0 0 24 24" fill="currentColor">
                                 <path d="M12 7a2 2 0 100-4 2 2 0 000 4z"/><path d="M12 9c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
                             </svg>
@@ -150,7 +160,6 @@
                         </div>
                     </div>
 
-
                     <button type="submit" class="btn-grad text-white w-full py-4 rounded-xl font-bold text-lg shadow-lg">
                         Register
                     </button>
@@ -158,7 +167,7 @@
 
                 <p class="mt-8 text-center text-white/90 font-medium drop-shadow-md">
                     Already have an account?
-                    <a href="{{ route('login') }}" class="text-white font-bold hover:text-indigo-100 hover:underline">Login here</a>
+                    <a href="<?= route('login') ?>" class="text-white font-bold hover:text-indigo-100 hover:underline">Login here</a>
                 </p>
             </div>
         </div>

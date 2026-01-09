@@ -1,55 +1,61 @@
-@extends('layouts.master')
-
-@section('title', 'My Orders • MyStore')
-
-@push('styles')
+<?php
+// Capture Styles
+ob_start();
+?>
 <style>
     .hover-scale { transition: transform 0.2s; }
     .hover-scale:hover { transform: translateY(-2px); }
 </style>
-@endpush
+<?php
+$styles = ob_get_clean();
 
-@section('content')
+// Capture Content
+ob_start();
+?>
 <div class="container py-5">
     <div class="d-flex justify-content-between align-items-center mb-5">
         <div class="d-flex align-items-center">
             <h2 class="fw-bolder mb-0 text-3xl">My Orders</h2>
-            <span class="ms-3 badge bg-primary rounded-pill px-3">{{ $orders->total() }} Orders</span>
+            <span class="ms-3 badge bg-primary rounded-pill px-3"><?= $orders->total() ?> Orders</span>
         </div>
-        <a href="{{ route('products.index') }}" class="btn btn-outline-primary rounded-pill px-4 fw-bold hover-scale">
+        <a href="<?= route('products.index') ?>" class="btn btn-outline-primary rounded-pill px-4 fw-bold hover-scale">
             <i class="bi bi-bag me-2"></i> Continue Shopping
         </a>
     </div>
     
     <div id="order-list">
-        @include('orders.partials.card', ['orders' => $orders])
+        <?php include __DIR__ . '/partials/card.php'; ?>
     </div>
     
-    @if($orders->isEmpty())
+    <?php if($orders->isEmpty()): ?>
         <div class="text-center py-5 bg-white rounded-4 shadow-sm border border-dashed border-secondary border-opacity-25 mt-4">
             <div class="mb-4 text-primary opacity-50 display-1"><i class="bi bi-box2"></i></div>
             <h3 class="fw-bold text-gray-800">No orders placed yet</h3>
             <p class="text-muted mb-4 mx-auto" style="max-width: 400px;">Looks like you haven't bought anything yet. Explore our products and grab the best deals!</p>
-            <a href="{{ route('products.index') }}" class="btn btn-lg btn-primary rounded-pill px-5 fw-bold shadow hover-scale">
+            <a href="<?= route('products.index') ?>" class="btn btn-lg btn-primary rounded-pill px-5 fw-bold shadow hover-scale">
                 Start Shopping Now
             </a>
         </div>
-    @endif
+    <?php endif; ?>
 
-    @if($orders->hasMorePages())
+    <?php if($orders->hasMorePages()): ?>
         <div id="scroll-sentinel" class="d-flex justify-content-center my-4">
             <div class="spinner-border text-primary d-none" role="status" id="loading-spinner">
                 <span class="visually-hidden">Loading...</span>
             </div>
         </div>
-    @endif
+    <?php endif; ?>
 </div>
-@endsection
 
-@push('scripts')
+<?php 
+$content = ob_get_clean();
+
+// Capture Scripts
+ob_start(); 
+?>
 <script>
     document.addEventListener('DOMContentLoaded', function () {
-        let nextPageUrl = "{{ $orders->nextPageUrl() }}";
+        let nextPageUrl = "<?= $orders->nextPageUrl() ?>";
         const sentinel = document.getElementById('scroll-sentinel');
         const spinner = document.getElementById('loading-spinner');
         const list = document.getElementById('order-list');
@@ -98,4 +104,8 @@
         }
     });
 </script>
-@endpush
+<?php
+$scripts = ob_get_clean();
+
+include __DIR__ . '/../../layouts/master.php';
+?>
