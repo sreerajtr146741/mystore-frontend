@@ -1,3 +1,6 @@
+<?php
+// mystorefrontend/auth/forgot-password.php
+?>
 <!DOCTYPE html>
 <html>
 <head>
@@ -20,20 +23,20 @@
         <h2 class="text-2xl font-bold text-gray-800 text-center mb-2">Forgot Password?</h2>
         <p class="text-gray-500 text-center mb-6">Enter your email to receive a reset code</p>
 
-        @if(session('status'))
+        <?php if(session('status')): ?>
             <div class="mb-4 p-3 bg-green-100 border border-green-300 text-green-700 rounded-xl">
-                {{ session('status') }}
+                <?= session('status') ?>
             </div>
-        @endif
+        <?php endif; ?>
 
-        @if($errors->any())
+        <?php if($errors->any()): ?>
             <div class="mb-4 p-3 bg-red-100 border border-red-300 text-red-700 rounded-xl">
-                {{ $errors->first() }}
+                <?= $errors->first() ?>
             </div>
-        @endif
+        <?php endif; ?>
 
-        <form action="{{ route('password.email') }}" method="POST" class="space-y-6">
-            @csrf
+        <form action="/forgot-password" method="POST" class="space-y-6">
+            <?= csrf_field() ?>
             
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">Email Address</label>
@@ -48,7 +51,16 @@
         </form>
 
         <div class="mt-6 text-center text-sm">
-            <a href="{{ route('login') }}" class="text-blue-600 hover:underline">← Back to Login</a>
+            <a href="/login" class="text-blue-600 hover:underline">← Back to Login</a>
+        </div>
+        
+        <div class="mt-4 pt-4 border-t border-gray-200 text-center">
+            <a href="/" class="text-gray-500 hover:text-blue-600 font-medium transition flex items-center justify-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                    <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z" />
+                </svg>
+                Go Home
+            </a>
         </div>
     </div>
 </body>

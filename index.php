@@ -290,6 +290,54 @@ if ($uri === '/' || $uri === '/products' || $uri === '/index.php') {
         header("Location: /verify-otp"); exit;
     }
 
+} elseif ($uri === '/forgot-password') {
+    $viewName = 'auth.forgot-password';
+    if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+        $email = $_POST['email'] ?? '';
+        // Call API endpoint for forgot password
+        $res = api_client('forgot-password', 'POST', ['email' => $email]);
+        
+        if ($res && isset($res->status) && $res->status == true) {
+            $_SESSION['status'] = $res->message ?? 'Reset code sent if email exists.';
+             // If API returns a token or just success, maybe redirect to reset page or stay here?
+             // Usually flow is -> Send Email -> Enter OTP -> Enter New Password.
+             // Assuming flow redirects to verify-otp-password or similar.
+             // For now, let's assume it stays here with success message or redirects to an OTP page.
+             // If the backend sends an OTP, we might need to redirect to a reset-password page.
+             
+             // Check if API response indicates next step.
+             // For this simple implementation, let's assume we redirect to a reset password page 
+             // where user enters email + OTP + new password.
+             $_SESSION['reset_email'] = $email;
+             header("Location: /reset-password"); exit;
+        } else {
+             $data['errors']->add('email', $res->message ?? 'Unable to send reset link.');
+        }
+    }
+
+} elseif ($uri === '/reset-password') {
+    // Handling the actual reset page (Email + OTP + New Password)
+    $viewName = 'auth.reset-password';
+    $data['email'] = $_SESSION['reset_email'] ?? '';
+    
+    if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+        $payload = [
+            'email' => $_POST['email'],
+            'otp' => $_POST['otp'],
+            'password' => $_POST['password'],
+            'password_confirmation' => $_POST['password_confirmation']
+        ];
+        $res = api_client('reset-password', 'POST', $payload);
+        
+        if ($res && isset($res->status) && $res->status == true) {
+            $_SESSION['success'] = 'Password reset successfully! Please login.';
+            header("Location: /login"); exit;
+        } else {
+             $data['errors']->add('reset', $res->message ?? 'Invalid OTP or Password mismatch.');
+             $data['email'] = $_POST['email']; // Keep email
+        }
+    }
+
 } elseif ($uri === '/login') {
     $viewName = 'auth.login';
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
