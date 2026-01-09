@@ -13,28 +13,41 @@ function api_client($endpoint, $method = 'GET', $data = []) {
         $headers[] = "Authorization: Bearer " . $_SESSION['api_token'];
     }
     
-    $options = [
-        "http" => [
-            "header" => implode("\r\n", $headers),
-            "method" => $method,
-            "ignore_errors" => true, // Fetch body even on 4xx/5xx
-            "timeout" => 15 // Timeout in seconds
-        ],
-        "ssl" => [
-            "verify_peer" => false,
-            "verify_peer_name" => false
-        ]
-    ];
+    // Use cURL instead of file_get_contents for better performance and error handling
+    $ch = curl_init();
     
+    // Set URL
+    curl_setopt($ch, CURLOPT_URL, $url);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_TIMEOUT, 30);
+    curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+    
+    // Headers
+    $curlHeaders = [];
+    foreach ($headers as $h) {
+        $curlHeaders[] = $h;
+    }
+    curl_setopt($ch, CURLOPT_HTTPHEADER, $curlHeaders);
+    
+    // Method & Data
     if ($method !== 'GET') {
-        $options['http']['content'] = json_encode($data);
+        curl_setopt($ch, CURLOPT_CUSTOMREQUEST, $method);
+        if (!empty($data)) {
+            curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
+        }
     }
     
-    $context = stream_context_create($options);
-    $result = @file_get_contents($url, false, $context);
+    // SSL (Disable verify for dev/test if needed, strictly should be true in prod)
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+    
+    $result = curl_exec($ch);
+    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    $error = curl_error($ch);
+    curl_close($ch);
     
     if ($result === FALSE) {
-        // Fallback or Error Handling
+        // Log error or handle gracefully
+        error_log("API Error: $error");
         return null;
     }
     
