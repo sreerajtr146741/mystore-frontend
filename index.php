@@ -407,6 +407,13 @@ if ($uri === '/' || $uri === '/products' || $uri === '/index.php') {
     }
 }
 
+// Fallback if no route matched
+if ($viewName === null) {
+    http_response_code(404);
+    echo "<div style='text-align:center; padding:50px; font-family: sans-serif;'><h1>404 Not Found</h1><p>The page <b>" . htmlspecialchars($uri) . "</b> could not be found.</p><a href='/'>Go Home</a></div>";
+    exit;
+}
+
 // --------------------------------------------------------------------------
 // 4. RENDER (Plain PHP)
 // --------------------------------------------------------------------------
