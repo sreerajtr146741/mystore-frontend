@@ -3,20 +3,16 @@ require __DIR__ . '/vendor/autoload.php';
 require __DIR__ . '/config.php';
 require __DIR__ . '/api_helper.php';
 
-use Jenssegers\Blade\Blade;
 use Illuminate\Support\MessageBag;
 use Illuminate\Support\ViewErrorBag;
 use Illuminate\Support\Collection;
 use Carbon\Carbon;
 
 // --------------------------------------------------------------------------
-// 1. SETUP BLADE
+// 1. SETUP
 // --------------------------------------------------------------------------
 $views = __DIR__ . '/mystorefrontend';
-$cache = __DIR__ . '/cache';
-if (!is_dir($cache)) @mkdir($cache, 0777, true);
-
-$blade = new Blade($views, $cache);
+// No Blade setup needed.
 
 // --------------------------------------------------------------------------
 // 2. HELPER MOCKS (Laravel Style Helpers for Views)
@@ -48,6 +44,20 @@ if (!function_exists('request')) {
             public function all(){ return $_GET; } 
             public function has($k){ return isset($_GET[$k]); }
             public function ajax() { return isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest'; }
+            public function routeIs($pattern) {
+                // Simple partial check on URI for now
+                global $uri;
+                // pattern keys
+                $map = [
+                    'products.index' => ['/', '/products'],
+                    'about' => ['/about'],
+                    'contact' => ['/contact']
+                ];
+                if(isset($map[$pattern])) {
+                    return in_array($uri, $map[$pattern]);
+                }
+                return false;
+            }
         };
         return $_GET[$key] ?? $default;
     }
@@ -312,8 +322,6 @@ if ($uri === '/' || $uri === '/products' || $uri === '/index.php') {
     } elseif ($uri === '/admin/orders') {
         // Fallback or explicit check
         $viewName = 'admin.orders.index';
-        if (!$blade->exists($viewName)) $viewName = 'admin.orders'; // If file is admin/orders.php
-
         $res = api_client('admin/orders');
         $data['orders'] = collect($res->data ?? []);
 
@@ -383,30 +391,38 @@ if ($uri === '/' || $uri === '/products' || $uri === '/index.php') {
 }
 
 // --------------------------------------------------------------------------
-// 4. RENDER
+// 4. RENDER (Plain PHP)
 // --------------------------------------------------------------------------
 
 try {
-    if (!$blade->exists($viewName)) {
-        // Try fallback with dot notation for cleaner URLs like /admin/users -> admin.users
+    extract($data);
+    $viewFile = $views . '/' . str_replace('.', '/', $viewName) . '.php';
+    
+    // Check if view exists
+    if (!file_exists($viewFile)) {
+        // Try fallback logic (e.g., folder/index.php)
         $fallback = str_replace('/', '.', ltrim($uri, '/'));
-        if ($blade->exists($fallback)) {
-            $viewName = $fallback;
-        } elseif ($blade->exists($fallback . '.index')) {
-             $viewName = $fallback . '.index';
+        if (strpos($fallback, '.') === false) $fallback .= '.index'; // e.g. products -> products.index
+        $fallbackFile = $views . '/' . str_replace('.', '/', $fallback) . '.php';
+        
+        if (file_exists($fallbackFile)) {
+             $viewFile = $fallbackFile;
         } else {
-             echo "<h1>404 Not Found</h1> View not found for uri: $uri"; exit;
+             // 404
+             http_response_code(404);
+             echo "<h1>404 Not Found</h1> View not found: $viewName"; 
+             exit;
         }
     }
-    echo $blade->make($viewName, $data)->render();
+    
+    // Include View
+    include $viewFile;
+
 } catch (Exception $e) {
     echo "<div style='font-family:sans-serif; padding:20px; border-left:5px solid red; background:#fff0f0;'>";
-    echo "<h3>Blade Rendering Error</h3>";
-    echo "<b>View:</b> $viewName<br>";
+    echo "<h3>Rendering Error</h3>";
     echo "<b>Message:</b> " . $e->getMessage() . "<br>";
     echo "<b>File:</b> " . $e->getFile() . " on line " . $e->getLine();
-    echo "<pre style='background:#333; color:#fff; padding:10px; overflow:auto;'>";
-    echo $e->getTraceAsString();
-    echo "</pre>";
+    echo "<pre>" . $e->getTraceAsString() . "</pre>";
     echo "</div>";
 }

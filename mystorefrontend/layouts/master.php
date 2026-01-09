@@ -3,13 +3,13 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>@yield('title', 'MyStore')</title>
+    <title>MyStore</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    @stack('styles')
+    <?= $styles ?? '' ?>
     <style>
         body { font-family: 'Poppins', sans-serif; background-color: #f8f9fa; padding-top: 60px; }
         
@@ -134,16 +134,16 @@
         <!-- Left/Center Navigation -->
         <div class="d-flex align-items-center gap-4 left-nav">
             <!-- Logo area -->
-            <a href="{{ route('products.index') }}" class="d-flex align-items-center text-decoration-none text-dark me-3">
+            <a href="<?= route('products.index') ?>" class="d-flex align-items-center text-decoration-none text-dark me-3">
                 <i class="bi bi-bag-fill fs-4 me-2"></i>
                 <span class="fw-bold fs-5" style="letter-spacing: -0.5px;">MyStore</span>
             </a>
 
             <!-- Search Bar (Added) -->
             <div class="search-bar-container" id="searchBar">
-                 <form action="{{ route('products.index') }}" class="d-flex justify-content-center w-100">
+                 <form action="<?= route('products.index') ?>" class="d-flex justify-content-center w-100">
                      <div class="position-relative" style="width: 100%; max-width: 600px;">
-                        <input type="text" name="search" class="search-input-header" placeholder="Search for products, brands and more" value="{{ request('search') }}">
+                        <input type="text" name="search" class="search-input-header" placeholder="Search for products, brands and more" value="<?= request('search') ?>">
                         <button type="submit" class="position-absolute top-50 end-0 translate-middle-y border-0 bg-transparent pe-3 text-primary">
                             <i class="bi bi-search"></i>
                         </button>
@@ -153,52 +153,49 @@
 
             <!-- Links -->
             <nav class="d-flex align-items-center gap-2">
-                <a href="{{ route('products.index') }}" class="nav-link-custom {{ request()->routeIs('products.index') ? 'active' : '' }}">Home</a>
-                <a href="{{ route('about') }}" class="nav-link-custom {{ request()->routeIs('about') ? 'active' : '' }}">About</a>
-                <a href="{{ route('contact') }}" class="nav-link-custom {{ request()->routeIs('contact') ? 'active' : '' }}">Contact</a>
+                <a href="<?= route('products.index') ?>" class="nav-link-custom active">Home</a>
+                <a href="#" class="nav-link-custom">About</a>
+                <a href="#" class="nav-link-custom">Contact</a>
             </nav>
         </div>
 
         <!-- Right Side Icons -->
         <div class="right-nav">
-
-
-            <a href="{{ route('cart.index') }}" class="right-item position-relative">
+            <a href="<?= route('cart.index') ?>" class="right-item position-relative">
                 <i class="bi bi-bag-fill"></i>
-                @php $cartCount = count(session('cart', [])); @endphp
-                @if($cartCount > 0)
+                <?php $cartCount = count(session('cart', [])); ?>
+                <?php if($cartCount > 0): ?>
                     <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size: 0.6rem;">
-                        {{ $cartCount }}
+                        <?= $cartCount ?>
                     </span>
-                @endif
+                <?php endif; ?>
             </a>
 
-            @auth
+            <?php if(auth()->check()): ?>
                 <div class="dropdown">
                     <a href="#" class="d-flex align-items-center text-decoration-none" data-bs-toggle="dropdown">
-                        <img src="{{ auth()->user()->profile_photo_url }}" 
-                             alt="{{ auth()->user()->name }}"
+                        <img src="<?= auth()->user()->profile_photo_url ?? 'https://ui-avatars.com/api/?name='.urlencode(auth()->user()->name) ?>" 
+                             alt="<?= auth()->user()->name ?>"
                              class="rounded-circle"
                              style="width: 40px; height: 40px; object-fit: cover; border: 2px solid #fff; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
                     </a>
                     <ul class="dropdown-menu dropdown-menu-end shadow border-0">
-                        <li><a class="dropdown-item" href="{{ route('profile.edit') }}">Profile</a></li>
-                        <li><a class="dropdown-item" href="{{ route('orders.index') }}">Orders</a></li>
+                        <li><a class="dropdown-item" href="<?= route('orders.index') ?>">Orders</a></li>
                         <li><hr class="dropdown-divider"></li>
                         <li>
-                            <form action="{{ route('logout') }}" method="POST">
-                                @csrf
+                            <form action="<?= route('logout') ?>" method="POST">
+                                <?= csrf_field() ?>
                                 <button class="dropdown-item text-danger">Logout</button>
                             </form>
                         </li>
                     </ul>
                 </div>
-            @else
-                <a href="{{ route('login') }}" class="right-item">
+            <?php else: ?>
+                <a href="<?= route('login') ?>" class="right-item">
                     <i class="bi bi-person-fill"></i>
                     <span>Login</span>
                 </a>
-            @endauth
+            <?php endif; ?>
         </div>
     </div>
 </header>
@@ -211,29 +208,29 @@
   </div>
   <div class="offcanvas-body">
     <div class="d-grid gap-2">
-        <a href="{{ route('products.index') }}" class="btn {{ request()->routeIs('products.index') ? 'btn-primary' : 'btn-outline-dark' }} text-start border-0 fw-bold">Home</a>
-        <a href="{{ route('products.index') }}" class="btn btn-outline-dark text-start border-0">Shop</a>
-        <a href="{{ route('about') }}" class="btn {{ request()->routeIs('about') ? 'btn-primary' : 'btn-outline-dark' }} text-start border-0 fw-bold">About</a>
-        <a href="{{ route('contact') }}" class="btn {{ request()->routeIs('contact') ? 'btn-primary' : 'btn-outline-dark' }} text-start border-0 fw-bold">Contact</a>
+        <a href="<?= route('products.index') ?>" class="btn btn-primary text-start border-0 fw-bold">Home</a>
+        <a href="<?= route('products.index') ?>" class="btn btn-outline-dark text-start border-0">Shop</a>
+        <a href="#" class="btn btn-outline-dark text-start border-0 fw-bold">About</a>
+        <a href="#" class="btn btn-outline-dark text-start border-0 fw-bold">Contact</a>
     </div>
   </div>
 </div>
 
 <main class="min-vh-100">
-    @yield('content')
+    <?= $content ?? '' ?>
 </main>
 
-{{-- Toast --}}
-@if(session('success'))
+<!-- Toast -->
+<?php if(session('success')): ?>
     <div class="position-fixed bottom-0 end-0 p-3" style="z-index: 11">
         <div class="toast show align-items-center text-white bg-success border-0" role="alert">
             <div class="d-flex">
-                <div class="toast-body">{{ session('success') }}</div>
+                <div class="toast-body"><?= session('success') ?></div>
                 <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
             </div>
         </div>
     </div>
-@endif
+<?php endif; ?>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script>
@@ -245,7 +242,7 @@
         }
     }
 </script>
-@stack('scripts')
+<?= $scripts ?? '' ?>
 
 </body>
 </html>
