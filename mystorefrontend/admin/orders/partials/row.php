@@ -13,7 +13,7 @@
                     <div class="d-flex gap-1 mt-2">
                         @foreach($order->items->take(4) as $item)
                             @if($item->product && $item->product->image)
-                                <img src="{{ backend_img($item->product->image) }}" 
+                                <img src="{{ asset('storage/'.$item->product->image) }}" 
                                         alt="img" 
                                         class="rounded-2 border border-white border-opacity-20 shadow-sm"
                                         style="width: 28px; height: 28px; object-fit: cover;"
@@ -31,33 +31,20 @@
         </td>
         <td class="py-4">
             <div class="d-flex flex-column gap-1">
-                @php
-                    $createdAt = $order->created_at ?? null;
-                    if ($createdAt && !($createdAt instanceof \DateTimeInterface)) {
-                        try { $createdAt = \Carbon\Carbon::parse($createdAt); } catch(\Exception $e){ $createdAt = null; }
-                    }
-                    
-                    $updatedAt = $order->updated_at ?? null;
-                    if ($updatedAt && !($updatedAt instanceof \DateTimeInterface)) {
-                        try { $updatedAt = \Carbon\Carbon::parse($updatedAt); } catch(\Exception $e){ $updatedAt = null; }
-                    }
-                @endphp
-                
                 <div class="small text-white-50 d-flex align-items-center gap-2">
-                    <i class="bi bi-calendar-event text-info"></i> Placed: {{ $createdAt->format('M d, Y') ?? 'N/A' }}
+                    <i class="bi bi-calendar-event text-info"></i> Placed: {{ $order->created_at->format('M d, Y') }}
                 </div>
-                
-                @if($updatedAt && $order->status == 'delivered')
+                @if($order->status == 'delivered')
                     <div class="small text-success fw-bold d-flex align-items-center gap-2">
-                        <i class="bi bi-check-all"></i> Completed: {{ $updatedAt->format('M d') }}
+                        <i class="bi bi-check-all"></i> Completed: {{ $order->updated_at->format('M d') }}
                     </div>
-                @elseif($updatedAt && $order->status == 'shipped')
+                @elseif($order->status == 'shipped')
                     <div class="small text-primary-emphasis fw-bold d-flex align-items-center gap-2" style="color: #38bdf8 !important;">
-                        <i class="bi bi-truck"></i> Shipped: {{ $updatedAt->format('M d') }}
+                        <i class="bi bi-truck"></i> Shipped: {{ $order->updated_at->format('M d') }}
                     </div>
-                @elseif($updatedAt && $order->status == 'processing')
+                @elseif($order->status == 'processing')
                     <div class="small text-warning-emphasis fw-bold d-flex align-items-center gap-2" style="color: #fbbf24 !important;">
-                        <i class="bi bi-gear-fill"></i> Processing: {{ $updatedAt->format('M d') }}
+                        <i class="bi bi-gear-fill"></i> Processing: {{ $order->updated_at->format('M d') }}
                     </div>
                 @endif
             </div>

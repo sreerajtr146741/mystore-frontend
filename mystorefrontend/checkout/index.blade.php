@@ -163,7 +163,7 @@
                             </div>
                             <div class="col-md-6">
                                 <div class="form-floating">
-                                    <input type="tel" name="phone" class="form-control" id="fPhone" placeholder="10-digit mobile number" value="{{ $prefillPhone }}" required>
+                                    <input type="tel" name="phone" class="form-control" id="fPhone" placeholder="10-digit mobile number" value="{{ old('phone', $user->phoneno) }}" required>
                                     <label for="fPhone">10-digit mobile number</label>
                                 </div>
                             </div>
@@ -199,10 +199,11 @@
                         <div class="item-row d-flex px-4">
                             <!-- Image and Quantity Section -->
                             <div class="flex-shrink-0 text-center" style="width: 112px;">
-                                    $imgSrc = backend_img($item->image ?? null); 
-                                    // Use @php block end if needed, usually cleaner in one go
-                                @endphp
-                                <img src="{{ $imgSrc }}" class="item-image mb-2" alt="Product">
+                                @if(\Illuminate\Support\Str::startsWith($item->image, 'http'))
+                                    <img src="{{ $item->image }}" class="item-image mb-2" alt="Product">
+                                @else
+                                    <img src="{{ asset('storage/'.$item->image) }}" class="item-image mb-2" alt="Product">
+                                @endif
                                 
                                 <div class="qty-control justify-content-center">
                                     <button type="button" class="qty-btn" onclick="updateQty('{{ $item->id }}', -1)">−</button>

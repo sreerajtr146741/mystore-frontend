@@ -51,21 +51,15 @@
                 <!-- Product Previews -->
                 <div class="col-md-7">
                     <div class="d-flex align-items-center gap-3 overflow-auto pb-2" style="scrollbar-width: thin;">
-                        @php
-                            $items = collect($order->items ?? []);
-                        @endphp
-                        @foreach($items->take(4) as $item)
-                            @php
-                                $prod = $item->product ?? (object)[];
-                                $imgSrc = backend_img($prod->image ?? null);
-                            @endphp
+                        @foreach($order->items->take(4) as $item)
                             <div class="position-relative" style="min-width: 70px;">
                                 <div class="ratio ratio-1x1 rounded-3 overflow-hidden border bg-white">
-                                    <img src="{{ $imgSrc }}" class="object-fit-cover" alt="Product">
+                                    <img src="{{ \Illuminate\Support\Str::startsWith($item->product->image, 'http') ? $item->product->image : asset('storage/'.$item->product->image) }}" 
+                                         class="object-fit-cover" alt="Product">
                                 </div>
-                                @if($loop->iteration == 4 && $items->count() > 4)
+                                @if($loop->iteration == 4 && $order->items->count() > 4)
                                     <div class="position-absolute top-0 start-0 w-100 h-100 bg-dark bg-opacity-75 d-flex align-items-center justify-content-center text-white fw-bold rounded-3">
-                                        +{{ $items->count() - 3 }}
+                                        +{{ $order->items->count() - 3 }}
                                     </div>
                                 @endif
                             </div>
@@ -97,11 +91,7 @@
                             @endif
 
                             @php
-                                $updatedAt = $order->updated_at ?? now();
-                                if (!$updatedAt instanceof \Carbon\Carbon) {
-                                     try { $updatedAt = \Carbon\Carbon::parse($updatedAt); } catch (\Exception $e) { $updatedAt = now(); }
-                                }
-                                $daysSinceDelivery = $updatedAt ? $updatedAt->diffInDays(now()) : 0;
+                                $daysSinceDelivery = $order->updated_at->diffInDays(now());
                                 $canReturn = $daysSinceDelivery <= 7;
                             @endphp
 

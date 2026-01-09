@@ -14,13 +14,7 @@
     <div class="d-flex justify-content-between align-items-center mb-5">
         <div class="d-flex align-items-center">
             <h2 class="fw-bolder mb-0 text-3xl">My Orders</h2>
-            <span class="ms-3 badge bg-primary rounded-pill px-3">
-                @if(method_exists($orders, 'total'))
-                    {{ $orders->total() }} Orders
-                @else
-                    {{ is_countable($orders) ? count($orders) : 0 }} Orders
-                @endif
-            </span>
+            <span class="ms-3 badge bg-primary rounded-pill px-3">{{ $orders->total() }} Orders</span>
         </div>
         <a href="{{ route('products.index') }}" class="btn btn-outline-primary rounded-pill px-4 fw-bold hover-scale">
             <i class="bi bi-bag me-2"></i> Continue Shopping

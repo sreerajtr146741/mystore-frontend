@@ -26,10 +26,10 @@
 </head>
 <body>
 @php
-  $user = auth()->user(); // Removed .fresh() call which does not exist on MockUser
-  $fallback = 'https://ui-avatars.com/api/?background=6d28d9&color=fff&name='.urlencode($user->name ?? 'User');
-  $photoPath = ($user->profile_photo ?? false) ? asset('storage/'.$user->profile_photo) : $fallback;
-  $photoUrl = $photoPath.'?t='.(optional($user->updated_at ?? null)->timestamp ?? time());
+  $user = auth()->user()->fresh();
+  $fallback = 'https://ui-avatars.com/api/?background=6d28d9&color=fff&name='.urlencode($user->name);
+  $photoPath = $user->profile_photo ? asset('storage/'.$user->profile_photo) : $fallback;
+  $photoUrl = $photoPath.'?t='.(optional($user->updated_at)->timestamp ?? time());
 @endphp
 
 <nav class="navbar navbar-light bg-white shadow-sm">
@@ -82,29 +82,38 @@
             <div class="section-title"><i class="bi bi-person-lines-fill me-2"></i> Basic Information</div>
             <div class="section-desc">These details will appear on billing & orders.</div>
 
+@php
+  // Fallback if first/last names are missing in DB but name exists
+  $fName = $user->firstname;
+  $lName = $user->lastname;
+  if (empty($fName) && !empty($user->name)) {
+      $parts = explode(' ', $user->name, 2);
+      $fName = $parts[0] ?? '';
+      $lName = $parts[1] ?? '';
+  }
+@endphp
+
             <div class="panel-soft">
               <div class="grid-2">
                 <div class="field">
                   <label class="fw-bold"><i class="bi bi-person-circle me-1 text-primary"></i> First Name</label>
-                  <input type="text" name="first_name" class="form-control glass form-control-lg" value="{{ old('first_name', $user->first_name ?? '') }}" required>
+                  <input type="text" name="firstname" class="form-control glass form-control-lg" value="{{ old('firstname', $fName) }}" required>
                 </div>
                 <div class="field">
-                  <label class="fw-bold"><i class="bi bi-person-circle me-1 text-primary"></i> Last Name</label>
-                  <input type="text" name="last_name" class="form-control glass form-control-lg" value="{{ old('last_name', $user->last_name ?? '') }}" required>
+                    <label class="fw-bold"><i class="bi bi-person-badge me-1 text-primary"></i> Last Name</label>
+                    <input type="text" name="lastname" class="form-control glass form-control-lg" value="{{ old('lastname', $lName) }}" required>
                 </div>
-                <div class="field" style="grid-column: span 2;">
+                <div class="field">
                   <label class="fw-bold"><i class="bi bi-envelope-at me-1 text-primary"></i> Email Address</label>
-                  <input type="email" name="email" class="form-control glass form-control-lg" value="{{ old('email', $user->email ?? '') }}" required>
+                  <input type="email" name="email" class="form-control glass form-control-lg" value="{{ old('email', $user->email) }}" required>
                 </div>
-              </div>
-              <div class="grid-2 mt-3">
                 <div class="field">
                   <label class="fw-bold"><i class="bi bi-telephone me-1 text-primary"></i> Phone</label>
-                  <input type="text" name="phone" class="form-control glass form-control-lg" value="{{ old('phone', $user->phone ?? '') }}">
+                  <input type="text" name="phoneno" class="form-control glass form-control-lg" value="{{ old('phoneno', $user->phoneno ?? '') }}">
                 </div>
-                <div class="field">
+                <div class="field" style="grid-column: span 2;">
                   <label class="fw-bold"><i class="bi bi-geo-alt-fill me-1 text-primary"></i> Address</label>
-                  <textarea name="address" class="form-control glass form-control-lg" rows="4">{{ old('address', $user->address ?? '') }}</textarea>
+                  <textarea name="address" class="form-control glass form-control-lg" rows="2">{{ old('address', $user->address ?? '') }}</textarea>
                 </div>
               </div>
             </div>
