@@ -67,3 +67,8 @@ function backend_img($path) {
 function safe_get($obj, $prop, $default = null) {
     return $obj->$prop ?? $default;
 }
+
+// Helper to detect AJAX triggers or explicitly passed ?ajax=1
+function is_ajax() {
+    return isset($_GET['ajax']) || (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest');
+}

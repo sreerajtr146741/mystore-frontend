@@ -356,12 +356,7 @@ if ($uri === '/' || $uri === '/products' || $uri === '/index.php') {
     }
 
 
-// Helper to detect AJAX triggers or explicitly passed ?ajax=1
-function is_ajax() {
-    return isset($_GET['ajax']) || (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest');
-}
-
-if ($uri === '/login') {
+} elseif ($uri === '/login') {
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $res = api_client('auth/login', 'POST', $_POST);
         
