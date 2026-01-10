@@ -1,9 +1,8 @@
 <?php
-include 'config.php';
-include 'api.php';
+include '../../config.php';
+include '../../api.php';
 
-$email = $_GET['email'] ?? ($_POST['email'] ?? '');
-$error = "";
+$email = $_GET['email'] ?? '';
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
@@ -12,14 +11,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         'otp'   => $_POST['otp']
     ];
 
-    // Call backend API
-    $response = callAPI("POST", "/verify-otp", $data);
+    $response = callAPI("POST", "verify-otp", $data);
 
-    if (!empty($response['status']) && $response['status'] == true) {
+    if (isset($response['status']) && $response['status'] == true) {
         header("Location: login.php");
         exit;
     } else {
-        $error = $response['message'] ?? "Invalid OTP. Try again.";
+        $error = $response['message'] ?? 'Verification failed';
     }
 }
 ?>
