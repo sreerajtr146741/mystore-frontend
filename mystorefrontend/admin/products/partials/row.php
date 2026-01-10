@@ -1,49 +1,40 @@
-@use('Illuminate\Support\Facades\Storage')
-@php
-    $resolveImg = function($path){
-        if(!$path) return null;
-        if(filter_var($path, FILTER_VALIDATE_URL)) return $path;
-        return Storage::url($path);
-    };
-@endphp
-@forelse($products as $p)
-@php
-    $img = $resolveImg($p->image);
-    $isActive = ($p->status === 'active') || ($p->is_active == 1);
-@endphp
+<?php foreach($products as $p): 
+    $img = $p->image ? (filter_var($p->image, FILTER_VALIDATE_URL) ? $p->image : '/storage/'.ltrim($p->image, '/')) : null;
+    $isActive = (isset($p->status) && $p->status === 'active') || (isset($p->is_active) && $p->is_active == 1);
+?>
 <tr>
-    <td>#{{ $p->id }}</td>
+    <td class="ps-4">#<?= $p->id ?></td>
     <td>
-        @if($img)
-            <img src="{{ $img }}" class="img-thumb" alt="Product">
-        @else
-            <div class="img-thumb bg-secondary d-flex align-items-center justify-content-center text-white-50">N/A</div>
-        @endif
+        <?php if($img): ?>
+            <img src="<?= $img ?>" class="rounded-2 border" width="48" height="48" style="object-fit: cover;" alt="Product">
+        <?php else: ?>
+            <div class="rounded-2 border bg-light d-flex align-items-center justify-content-center text-secondary small" style="width:48px; height:48px;">N/A</div>
+        <?php endif; ?>
     </td>
-    <td>{{ $p->name }}</td>
-    <td>{{ $p->category }}</td>
-    <td class="text-end">₹{{ number_format($p->price,2) }}</td>
-    <td class="text-end">{{ $p->stock }}</td>
+    <td class="fw-medium"><?= $p->name ?></td>
+    <td><span class="badge bg-light text-dark border fw-normal"><?= $p->category ?></span></td>
+    <td class="text-nowrap">₹<?= number_format($p->price, 2) ?></td>
+    <td><?= $p->stock ?></td>
     <td>
-        @if($isActive)
-            <span class="badge bg-success">Active</span>
-        @else
-            <span class="badge bg-secondary">Hidden</span>
-        @endif
+        <?php if($isActive): ?>
+            <span class="badge bg-success bg-opacity-10 text-success px-3 rounded-pill">Active</span>
+        <?php else: ?>
+            <span class="badge bg-secondary bg-opacity-10 text-secondary px-3 rounded-pill">Hidden</span>
+        <?php endif; ?>
     </td>
-    <td>{{ $p->user->name ?? '—' }}</td>
-    <td class="text-end">
-        <form method="POST" action="{{ route('admin.products.destroy', $p->id) }}" class="d-inline">
-            @csrf @method('DELETE')
-            <button class="btn btn-del btn-act" onclick="return confirm('Delete this product?')">
-                Delete
+    <td><small class="text-muted"><?= $p->seller_name ?? ($p->user->name ?? '—') ?></small></td>
+    <td class="text-end pe-4">
+        <a href="<?= route('admin.products.edit', ['id' => $p->id]) ?>" class="btn btn-sm btn-outline-primary rounded-pill me-1"><i class="bi bi-pencil"></i></a>
+        <form method="POST" action="<?= route('admin.products.destroy', ['id' => $p->id]) ?>" class="d-inline">
+             <?= csrf_field() ?>
+             <?= method_field('DELETE') ?>
+            <button class="btn btn-sm btn-outline-danger rounded-pill" onclick="return confirm('Delete this product?')">
+                <i class="bi bi-trash"></i>
             </button>
         </form>
-        <a href="{{ route('admin.products.edit', $p->id) }}" class="btn btn-edit btn-act">
-            Edit
-        </a>
-
     </td>
 </tr>
-@empty
-@endforelse
+<?php endforeach; ?>
+<?php if($products->isEmpty()): ?>
+<tr><td colspan="9" class="text-center py-4 text-muted">No products found.</td></tr>
+<?php endif; ?>

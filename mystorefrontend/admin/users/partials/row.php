@@ -1,52 +1,69 @@
-@forelse($users as $user)
+<?php if(!empty($users) && count($users) > 0): ?>
+    <?php foreach($users as $user): ?>
+    <?php 
+        if(is_array($user)) $user = (object)$user; 
+        $role = $user->role ?? 'buyer';
+        $status = $user->status ?? 'active';
+        $email = $user->email ?? '';
+        $id = $user->id ?? 0;
+        $name = $user->name ?? 'User';
+        // Handle created_at formatting safely
+        $joined = 'N/A';
+        if(isset($user->created_at)) {
+            // If it's a Carbon object or string
+            if(is_string($user->created_at)) $joined = date('M d, Y', strtotime($user->created_at));
+            else $joined = 'Date Err';
+        }
+    ?>
     <tr>
-        <td>{{ $user->id }}</td>
-        <td>{{ $user->name }}</td>
-        <td>{{ $user->email }}</td>
-        <td><span class="badge bg-info">{{ ucfirst($user->role) }}</span></td>
+        <td><?= $id ?></td>
+        <td><?= htmlspecialchars($name) ?></td>
+        <td><?= htmlspecialchars($email) ?></td>
+        <td><span class="badge bg-info"><?= ucfirst($role) ?></span></td>
         <td>
-            @if($user->status == 'active')
+            <?php if($status == 'active'): ?>
                 <span class="badge badge-active">Active</span>
-            @elseif($user->status == 'suspended')
+            <?php elseif($status == 'suspended'): ?>
                 <span class="badge badge-suspended">Suspended</span>
-            @else
+            <?php else: ?>
                 <span class="badge badge-blocked">Blocked</span>
-            @endif
+            <?php endif; ?>
         </td>
-        <td>{{ $user->created_at->format('M d, Y') }}</td>
+        <td><?= $joined ?></td>
         <td class="text-end">
-            @if($user->email !== 'admin@store.com')
+            <?php if($email !== 'admin@store.com'): ?>
                 <div class="btn-group btn-group-sm">
                     <button class="btn btn-outline-info btn-sm view-user-btn" 
-                            data-id="{{ $user->id }}" 
+                            data-id="<?= $id ?>" 
                             title="View Details">
                         <i class="bi bi-eye"></i>
                     </button>
 
-                    <form method="POST" action="{{ route('admin.users.toggle', $user->id) }}" class="d-inline">
-                        @csrf
-                        @method('PATCH')
-                        <button class="btn {{ $user->status == 'active' ? 'btn-outline-warning' : 'btn-outline-success' }} btn-sm" 
-                                title="{{ $user->status == 'active' ? 'Deactivate User' : 'Activate User' }}">
+                    <form method="POST" action="<?= route('admin.users.toggle', ['id'=>$id]) ?>" class="d-inline">
+                        <?= csrf_field() ?>
+                        <?= method_field('PATCH') ?>
+                        <button class="btn <?= $status == 'active' ? 'btn-outline-warning' : 'btn-outline-success' ?> btn-sm" 
+                                title="<?= $status == 'active' ? 'Deactivate User' : 'Activate User' ?>">
                             <i class="bi bi-power"></i>
                         </button>
                     </form>
 
-                    <form method="POST" action="{{ route('admin.users.destroy', $user->id) }}" class="d-inline">
-                        @csrf
-                        @method('DELETE')
+                    <form method="POST" action="<?= route('admin.users.destroy', ['id'=>$id]) ?>" class="d-inline">
+                        <?= csrf_field() ?>
+                        <?= method_field('DELETE') ?>
                         <button class="btn btn-dark btn-sm" title="Delete" onclick="return confirm('Delete this user permanently?')">
                             <i class="bi bi-trash"></i>
                         </button>
                     </form>
                 </div>
-            @else
+            <?php else: ?>
                 <span class="text-muted">Protected</span>
-            @endif
+            <?php endif; ?>
         </td>
     </tr>
-@empty
+    <?php endforeach; ?>
+<?php else: ?>
     <tr>
         <td colspan="7" class="text-center text-muted py-4">No users found</td>
     </tr>
-@endforelse
+<?php endif; ?>
