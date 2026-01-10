@@ -1,46 +1,41 @@
-FROM php:8.2-apache
+# -------------------------------
+# PHP 8.2 with FPM (NO Apache)
+# -------------------------------
+FROM php:8.2-fpm
 
-# 1. Install system dependencies and PHP extensions
+# Install system dependencies
 RUN apt-get update && apt-get install -y \
+    nginx \
+    supervisor \
+    curl \
     git \
     unzip \
     libzip-dev \
-    libonig-dev \
-    && docker-php-ext-install mysqli pdo pdo_mysql zip mbstring \
-    && apt-get clean && rm -rf /var/lib/apt/lists/*
+    libxml2-dev \
+    libonig-dev
 
-# 2. Enable Apache mod_rewrite
-RUN a2enmod rewrite
+# PHP extensions
+RUN docker-php-ext-install zip
 
-# 3. Configure Apache DocumentRoot and AllowOverride
-ENV APACHE_DOCUMENT_ROOT /var/www/html
-RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/sites-available/*.conf
-RUN sed -ri -e 's!/var/www/!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/apache2.conf /etc/apache2/conf-available/*.conf
-RUN sed -i 's/AllowOverride None/AllowOverride All/' /etc/apache2/apache2.conf
-RUN echo "ServerName localhost" >> /etc/apache2/apache2.conf
+# Configure PHP-FPM to listen on socket
+RUN mkdir -p /run/php && \
+    sed -i 's/listen = 127.0.0.1:9000/listen = \/run\/php\/php-fpm.sock/g' /usr/local/etc/php-fpm.d/www.conf && \
+    sed -i 's/;listen.mode = 0660/listen.mode = 0666/g' /usr/local/etc/php-fpm.d/www.conf
 
-# 4. Install Composer
-COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
-
-# 5. Set working directory
+# Set working directory
 WORKDIR /var/www/html
 
-# 6. Copy only composer files first (for caching)
-COPY composer.json composer.lock ./
-
-# 7. Install dependencies
-RUN composer install --no-dev --optimize-autoloader --no-scripts
-
-# 8. Copy the rest of the application
+# Copy frontend files
 COPY . .
 
-# 9. Create cache directory for Blade and set permissions
-RUN mkdir -p /var/www/html/cache \
-    && chown -R www-data:www-data /var/www/html \
-    && chmod -R 775 /var/www/html/cache
+# Copy Nginx config
+COPY ./nginx.conf /etc/nginx/sites-available/default
 
-# 10. Expose port 80
+# Copy supervisor config
+COPY ./supervisor.conf /etc/supervisor/conf.d/supervisor.conf
+
+# Expose port
 EXPOSE 80
 
-# 11. Start Apache
-CMD ["apache2-foreground"]
+# Start supervisor → Starts nginx + php-fpm
+CMD ["/usr/bin/supervisord", "-n"]
