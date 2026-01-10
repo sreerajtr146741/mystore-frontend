@@ -1,129 +1,116 @@
 <?php
-include __DIR__ . '/../../partials/premium-styles.php';
-// $users is available from index.php
+ob_start();
+
+$q = $_GET['q'] ?? '';
+$roleFilter = $_GET['role'] ?? '';
+$statusFilter = $_GET['status'] ?? '';
 ?>
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="utf-8">
-    <title>User Management • Admin</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
-</head>
-<body>
 
-<nav class="navbar navbar-dark bg-dark shadow-sm mb-4">
-    <div class="container-fluid">
-        <span class="navbar-brand fw-bold">MyStore Admin</span>
-        <form method="POST" action="<?= route('logout') ?>" class="m-0">
-            <?= csrf_field() ?>
-            <button class="btn btn-warning btn-sm">
-                <i class="bi bi-box-arrow-right me-1"></i>Logout
-            </button>
-        </form>
-    </div>
-</nav>
-
-<div class="container-fluid px-4">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2 class="fw-bold"><i class="bi bi-people me-2"></i>User Management</h2>
-    </div>
-
-    <?php if(session('success')): ?>
-        <div class="alert alert-success alert-dismissible fade show">
-            <?= session('success') ?>
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+<div class="row mb-4 animate__animated animate__fadeInDown">
+    <div class="col-12 d-flex justify-content-between align-items-center">
+        <div>
+            <h1 class="h3 fw-bold text-white mb-1">
+                <i class="bi bi-people me-2"></i>User <span class="text-secondary opacity-75">Management</span>
+            </h1>
+            <p class="text-white-50 mb-0 small">Manage user accounts and permissions.</p>
         </div>
-    <?php endif; ?>
+    </div>
+</div>
 
-    <?php if(session('error')): ?>
-        <div class="alert alert-danger alert-dismissible fade show">
-            <?= session('error') ?>
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
-    <?php endif; ?>
+<div class="card border-0 shadow-lg rounded-4 overflow-hidden animate__animated animate__fadeInUp" style="background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px);">
+    <div class="card-body p-0">
+        <?php if(session('success')): ?>
+            <div class="alert alert-success m-3 rounded-3 d-flex align-items-center gap-2 border-0 shadow-sm">
+                <i class="bi bi-check-circle-fill fs-5"></i>
+                <div class="fw-medium"><?= session('success') ?></div>
+                <button type="button" class="btn-close ms-auto" data-bs-dismiss="alert"></button>
+            </div>
+        <?php endif; ?>
 
-    <!-- Filters -->
-    <div class="card bg-dark border-secondary mb-4">
-        <div class="card-body">
-            <form method="GET" class="row g-3">
+        <?php if(session('error')): ?>
+            <div class="alert alert-danger m-3 rounded-3 d-flex align-items-center gap-2 border-0 shadow-sm">
+                <i class="bi bi-exclamation-triangle-fill fs-5"></i>
+                <div class="fw-medium"><?= session('error') ?></div>
+                <button type="button" class="btn-close ms-auto" data-bs-dismiss="alert"></button>
+            </div>
+        <?php endif; ?>
+
+        <!-- Filters -->
+        <div class="p-3 bg-light border-bottom">
+            <form method="GET" class="row g-3 align-items-center">
                 <div class="col-md-4">
-                    <input type="text" name="q" class="form-control" placeholder="Search by name or email" value="<?= htmlspecialchars($_GET['q'] ?? '') ?>">
+                     <div class="input-group">
+                         <span class="input-group-text bg-white"><i class="bi bi-search"></i></span>
+                         <input type="text" name="q" class="form-control" placeholder="Search by name or email" value="<?= htmlspecialchars($q) ?>">
+                     </div>
                 </div>
                 <div class="col-md-3">
                     <select name="role" class="form-select">
                         <option value="">All Roles</option>
-                        <option value="buyer" <?php if(($_GET['role'] ?? '') == 'buyer') echo 'selected'; ?>>Buyer</option>
-                        <option value="seller" <?php if(($_GET['role'] ?? '') == 'seller') echo 'selected'; ?>>Seller</option>
-                        <option value="admin" <?php if(($_GET['role'] ?? '') == 'admin') echo 'selected'; ?>>Admin</option>
+                        <option value="buyer" <?= $roleFilter == 'buyer' ? 'selected' : '' ?>>Buyer</option>
+                        <option value="seller" <?= $roleFilter == 'seller' ? 'selected' : '' ?>>Seller</option>
+                        <option value="admin" <?= $roleFilter == 'admin' ? 'selected' : '' ?>>Admin</option>
                     </select>
                 </div>
                 <div class="col-md-3">
                     <select name="status" class="form-select">
                         <option value="">All Status</option>
-                        <option value="active" <?php if(($_GET['status'] ?? '') == 'active') echo 'selected'; ?>>Active</option>
-                        <option value="suspended" <?php if(($_GET['status'] ?? '') == 'suspended') echo 'selected'; ?>>Suspended</option>
-                        <option value="blocked" <?php if(($_GET['status'] ?? '') == 'blocked') echo 'selected'; ?>>Blocked</option>
+                        <option value="active" <?= $statusFilter == 'active' ? 'selected' : '' ?>>Active</option>
+                        <option value="suspended" <?= $statusFilter == 'suspended' ? 'selected' : '' ?>>Suspended</option>
+                        <option value="blocked" <?= $statusFilter == 'blocked' ? 'selected' : '' ?>>Blocked</option>
                     </select>
                 </div>
                 <div class="col-md-2">
-                    <button type="submit" class="btn btn-primary w-100">Filter</button>
+                    <button type="submit" class="btn btn-primary w-100 fw-bold">Filter</button>
                 </div>
             </form>
         </div>
-    </div>
 
-    <!-- Users Table -->
-    <div class="card bg-dark border-secondary">
+        <!-- Users Table -->
         <div class="table-responsive">
-            <table class="table table-dark table-hover mb-0">
-                <thead>
+            <table class="table table-hover align-middle mb-0">
+                <thead class="bg-light text-secondary text-uppercase small fw-bold">
                     <tr>
-                        <th>ID</th>
+                        <th class="ps-3">ID</th>
                         <th>Name</th>
                         <th>Email</th>
                         <th>Role</th>
                         <th>Status</th>
                         <th>Joined</th>
-                        <th class="text-end">Actions</th>
+                        <th class="text-end pe-3">Actions</th>
                     </tr>
                 </thead>
-                <tbody id="user-rows">
+                <tbody id="user-rows" class="border-top-0">
                     <?php include __DIR__ . '/partials/row.php'; ?>
                 </tbody>
             </table>
         </div>
+        
     </div>
-
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-
-<!-- User Details Modal -->
+<?php 
+// User Details Modal logic
+?>
 <div class="modal fade" id="userDetailsModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content bg-dark border-secondary text-white shadow-lg">
-            <div class="modal-header border-secondary">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header">
                 <h5 class="modal-title fw-bold"><i class="bi bi-person-lines-fill me-2"></i>User Profile</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body p-4" id="user-modal-body">
                 <!-- Content loaded via JS -->
             </div>
-            <div class="modal-footer border-secondary">
+            <div class="modal-footer">
                 <button type="button" class="btn btn-secondary w-100" data-bs-dismiss="modal">Close</button>
             </div>
         </div>
     </div>
 </div>
 
-<script>
-document.addEventListener('DOMContentLoaded', () => {
-    // Basic modal logic for View User could be added here if needed
-    // Currently removed the complex AJAX fetch for simplicity unless requested
-});
-</script>
-
-</body>
-</html>
+<?php
+$content = ob_get_clean();
+$title = 'User Management • MyStore Admin';
+include __DIR__ . '/../../layouts/admin.php';
+?>

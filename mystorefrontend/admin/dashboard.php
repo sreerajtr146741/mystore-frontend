@@ -120,5 +120,5 @@ $isSeller = ($role === 'seller');
 <?php
 $content = ob_get_clean();
 $title = 'Dashboard • MyStore Admin';
-include __DIR__ . '/../../layouts/admin.php';
+include __DIR__ . '/../layouts/admin.php';
 ?>
