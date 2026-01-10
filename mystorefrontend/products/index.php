@@ -81,37 +81,57 @@ ob_start();
     <div class="row g-3">
         <!-- Sidebar Filters -->
         <div class="col-lg-3 col-xl-2" style="position: sticky; top: 80px; height: fit-content; z-index: 1;">
-            <div class="p-0 bg-white" style="border-right: 1px solid #eee; min-height: 80vh;"> <!-- Simulated full height look -->
-                
-                <!-- Categories Header -->
-                <div class="pt-2 pb-2 ps-1">
-                    <h6 class="text-uppercase fw-bold text-dark mb-3" style="font-size: 0.9rem; letter-spacing: 0.5px; opacity: 0.8;">CATEGORIES</h6>
+            <div class="bg-white p-3 shadow-sm rounded-3" style="min-height: 80vh;">
+                <!-- Filters Header -->
+                <div class="border-bottom pb-2 mb-3">
+                    <h5 class="fw-bold m-0">Filters</h5>
                 </div>
 
-                <!-- Category List -->
-                <div class="d-flex flex-column">
-                    <?php
-                    $cats = $categories ?? [];
-                    if(is_array($cats) || $cats instanceof \Traversable) {
-                        $cats = collect($cats)->map(function($c){ return is_object($c) ? ($c->name ?? 'Unknown') : $c; })->toArray();
-                    } else {
-                        $cats = [];
-                    }
-                    
-                    foreach($cats as $cat):
-                    ?>
-                        <a href="<?= route('products.index', array_merge(request()->all(), ['category' => $cat])) ?>" 
-                           class="d-flex align-items-center text-decoration-none py-2 ps-1 pe-2 rounded transition-all <?= request('category') === $cat ? 'text-primary' : 'text-dark default-cat-link' ?>"
-                           style="font-size: 1rem; margin-bottom: 2px;">
-                           
-                           <span class="me-2 text-secondary d-flex align-items-center justify-content-center" style="width: 20px; height: 20px;">
-                                <i class="bi bi-chevron-right" style="font-size: 0.75rem; -webkit-text-stroke: 1px;"></i>
-                           </span>
-                           <span class="<?= request('category') === $cat ? 'fw-bold' : '' ?>" style="font-weight: 400;"><?= $cat ?></span>
-                        </a>
-                    <?php endforeach; ?>
+                <!-- Search Section -->
+                <div class="mb-4">
+                    <h6 class="text-uppercase text-secondary fw-bold" style="font-size: 0.75rem; letter-spacing: 0.5px;">SEARCH</h6>
+                    <form action="" method="GET" class="d-flex mt-2">
+                        <!-- Preserve other query params -->
+                        <?php foreach($_GET as $k => $v): if($k=='search' || $k=='page') continue; ?>
+                            <input type="hidden" name="<?= $k ?>" value="<?= htmlspecialchars($v) ?>">
+                        <?php endforeach; ?>
+                        
+                        <div class="input-group input-group-sm">
+                             <input type="text" name="search" class="form-control bg-light border-0" placeholder="Search products..." value="<?= htmlspecialchars($_GET['search'] ?? '') ?>">
+                             <button class="btn btn-primary text-white border-0"><i class="bi bi-search"></i></button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Categories Section -->
+                <div class="mb-2">
+                    <h6 class="text-uppercase text-secondary fw-bold mb-2" style="font-size: 0.75rem; letter-spacing: 0.5px;">CATEGORIES</h6>
+                    <div class="d-flex flex-column gap-1">
+                        <?php
+                        $cats = $categories ?? [];
+                        if(is_array($cats) || $cats instanceof \Traversable) {
+                            $cats = collect($cats)->map(function($c){ return is_object($c) ? ($c->name ?? 'Unknown') : $c; })->toArray();
+                        } else {
+                            $cats = [];
+                        }
+                        
+                        foreach($cats as $cat):
+                            $isActive = (request('category') == $cat);
+                        ?>
+                            <a href="<?= route('products.index', array_merge(request()->all(), ['category' => $cat])) ?>" 
+                               class="d-flex align-items-center text-decoration-none py-1 px-2 rounded transition-all <?= $isActive ? 'bg-blue-50 text-primary fw-bold' : 'text-dark hover-bg-light' ?>"
+                               style="font-size: 0.9rem;">
+                               <i class="bi bi-chevron-right me-2 text-secondary" style="font-size: 0.7rem;"></i>
+                               <span><?= $cat ?></span>
+                            </a>
+                        <?php endforeach; ?>
+                    </div>
                 </div>
             </div>
+            
+            <style>
+                .hover-bg-light:hover { background-color: #f8f9fa; color: #2563eb !important; }
+            </style>
         </div>
 
         <style>
@@ -210,11 +230,11 @@ ob_start();
                     <div id="pagination-data" data-next-url="<?= $products->nextPageUrl() ?>" style="display:none;"></div>
                 <?php endif; ?>
             <?php else: ?>
-                <div class="card border-0 shadow-sm py-5 text-center">
+                <div class="card border-0 shadow-sm py-5 text-center mt-3">
                     <div class="card-body">
-                        <img src="https://static-assets-web.flixcart.com/fk-p-linchpin-web/fk-cp-zion/img/error-no-search-results_2353c5.png" alt="No Results" class="mb-4" style="max-width: 200px;">
-                        <h4>No products found</h4>
-                        <p class="text-muted">We couldn't find any products matching your criteria.</p>
+                        <img src="https://static-assets-web.flixcart.com/fk-p-linchpin-web/fk-cp-zion/img/error-no-search-results_2353c5.png" alt="No Results" class="mb-4" style="max-height: 160px;">
+                        <h4 class="fw-bold fs-4 mb-2">Sorry, no results found!</h4>
+                        <p class="text-secondary fs-6">We couldn't find any products matching your criteria.</p>
                     </div>
                 </div>
             <?php endif; ?>
