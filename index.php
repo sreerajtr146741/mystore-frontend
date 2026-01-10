@@ -345,7 +345,15 @@ if ($uri === '/' || $uri === '/products' || $uri === '/index.php') {
         if ($res && (isset($res->token) || isset($res->access_token))) {
             $_SESSION['api_token'] = $res->token ?? $res->access_token;
             $_SESSION['user'] = $res->user ?? (object)['name'=>'User', 'email'=>$_POST['email']];
-            header("Location: /"); exit;
+            
+            // Redirect based on Role
+            $role = $_SESSION['user']->role ?? 'buyer';
+            if ($role === 'admin' || $role === 'seller') {
+                 header("Location: /admin/dashboard"); 
+            } else {
+                 header("Location: /"); 
+            }
+            exit;
         } else {
              $data['errors']->add('login', 'Invalid credentials');
         }
