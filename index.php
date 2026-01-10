@@ -355,67 +355,87 @@ if ($uri === '/' || $uri === '/products' || $uri === '/index.php') {
         }
     }
 
-} elseif ($uri === '/login') {
-    $viewName = 'auth.login';
+
+// Helper to detect AJAX triggers or explicitly passed ?ajax=1
+function is_ajax() {
+    return isset($_GET['ajax']) || (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest');
+}
+
+if ($uri === '/login') {
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-        $res = api_client('auth/login', 'POST', $_POST); // Updated path
+        $res = api_client('auth/login', 'POST', $_POST);
         
-        // Extract Token & User identifying nested 'data' structure
         $token = $res->token ?? $res->access_token ?? $res->data->token ?? null;
         $user  = $res->user ?? $res->data->user ?? null;
-
+       
         if ($token) {
             $_SESSION['api_token'] = $token;
             $_SESSION['user'] = $user ?? (object)['name'=>'User', 'email'=>$_POST['email']];
             
             // Redirect based on Role
             $role = $_SESSION['user']->role ?? 'buyer';
-            if ($role === 'admin' || $role === 'seller') {
-                 header("Location: /admin/dashboard"); 
+            $redirect = ($role === 'admin' || $role === 'seller') ? '/admin/dashboard' : '/';
+            
+            if (is_ajax()) {
+                header('Content-Type: application/json');
+                echo json_encode(['success' => true, 'redirect' => $redirect]);
+                exit;
             } else {
-                 header("Location: /"); 
+                header("Location: $redirect"); exit;
             }
-            exit;
         } else {
              $msg = $res->message ?? 'Invalid credentials';
-             $data['errors']->add('login', $msg);
+             
+             if (is_ajax()) {
+                 header('Content-Type: application/json');
+                 echo json_encode(['success' => false, 'message' => $msg]);
+                 exit;
+             } else {
+                 $data['errors']->add('login', $msg);
+             }
         }
     }
+    $viewName = 'auth.login';
 
 } elseif ($uri === '/register') {
-    $viewName = 'auth.register';
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-        $res = api_client('auth/register', 'POST', $_POST); // Updated path
-        
-        // Usually register -> OTP. 
-        // Backend returns "Registration successful. OTP sent..."
-        // Status implies success.
+        $res = api_client('auth/register', 'POST', $_POST);
+        // Expecting: "Registration successful. OTP sent..."
         
         if ($res && (isset($res->status) && $res->status == true)) {
              $_SESSION['register_email'] = $_POST['email'];
              $_SESSION['otp_type'] = 'register';
              
-             // Check if backend auto-logins (rare given OTP flow)
+             // Check if backend auto-logins
              if (isset($res->data->token)) {
                  $_SESSION['api_token'] = $res->data->token;
                  $_SESSION['user'] = $res->data->user;
-                 header("Location: /"); exit;
+                 $redirect = '/';
+             } else {
+                 $redirect = '/verify-otp';
              }
              
-             header("Location: /verify-otp"); exit;
+             if (is_ajax()) {
+                 header('Content-Type: application/json');
+                 echo json_encode(['success' => true, 'redirect' => $redirect]);
+                 exit;
+             } else {
+                 header("Location: $redirect"); exit;
+             }
+             
         } else {
-            // Error handling
             $msg = $res->message ?? 'Registration failed.';
-            if (isset($res->errors)) {
-                // Formatting Laravel errors
-                // "errors": {"email": ["Msg"]}
-                // Our simple ViewErrorBag likely takes string.
-                // We'll just take the first error for simplicity or the message.
+            if (is_ajax()) {
+                header('Content-Type: application/json');
+                echo json_encode(['success' => false, 'message' => $msg]);
+                exit;
+            } else {
+                $data['errors']->add('register', $msg);
+                $_SESSION['register_email'] = $_POST['email']; 
             }
-            $data['errors']->add('register', $msg);
-            $_SESSION['register_email'] = $_POST['email']; 
         }
     }
+    $viewName = 'auth.register';
 
 } elseif (strpos($uri, '/admin') === 0) {
     // Admin Routes
