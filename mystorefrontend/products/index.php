@@ -1,4 +1,18 @@
 <?php
+// User Request: Fetch products directly in view
+require_once __DIR__ . '/../../config.php';
+require_once __DIR__ . '/../../api.php';
+
+// Fetch products
+$response = callAPI("GET", "/products");
+$products = collect($response['data'] ?? []);
+
+// Ensure compatibility with view pagination calls
+if (!method_exists($products, 'hasMorePages')) {
+    $products->macro('hasMorePages', function(){ return false;});
+    $products->macro('nextPageUrl', function(){ return '#';});
+}
+
 // 1. Capture Styles
 ob_start();
 ?>
