@@ -1,7 +1,9 @@
 <?php
 
 function api_client($endpoint, $method = 'GET', $data = []) {
-    $url = API_URL . '/' . ltrim($endpoint, '/');
+    // Handle specific user config change (API_URL -> API_BASE_URL)
+    $baseUrl = defined('API_BASE_URL') ? API_BASE_URL : API_URL;
+    $url = rtrim($baseUrl, '/') . '/' . ltrim($endpoint, '/');
     
     $headers = [
         "Content-Type: application/json",
