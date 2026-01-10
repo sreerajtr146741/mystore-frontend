@@ -4,7 +4,7 @@
 // =====================================
 
 // Backend Base URL (Render)
-define('BACKEND_URL', 'https://mystore-backend-gk8t.onrender.com');
+define('BACKEND_URL', 'https://mystore-production-8eef.up.railway.app');
 
 // Backend API Base URL
 define('API_BASE_URL', BACKEND_URL . '/api/');
