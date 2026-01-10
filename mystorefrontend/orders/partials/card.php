@@ -1,4 +1,8 @@
-<?php foreach($orders as $order): ?>
+<?php 
+$idx = 0;
+foreach($orders as $order): 
+    $idx++; 
+?>
     <div class="card border-0 shadow-lg mb-4 rounded-4 overflow-hidden hover:shadow-2xl transition-all duration-300">
         <div class="card-header bg-white border-bottom-0 p-4 d-flex justify-content-between align-items-center flex-wrap gap-3">
             <div class="d-flex align-items-center gap-3">
@@ -55,7 +59,9 @@
                         // Mock Items collection if array
                         $items = is_array($order->items) ? collect($order->items) : $order->items;
                         $take4 = $items->take(4);
+                        $itemIdx = 0;
                         foreach($take4 as $item): 
+                            $itemIdx++;
                             // Ensure item is object
                             $item = (object)$item;
                             // Ensure nested product is object
@@ -68,7 +74,7 @@
                                 <div class="ratio ratio-1x1 rounded-3 overflow-hidden border bg-white">
                                     <img src="<?= $imgSrc ?>" class="object-fit-cover" alt="Product">
                                 </div>
-                                <?php if($loop->iteration == 4 && $items->count() > 4): ?>
+                                <?php if($itemIdx == 4 && $items->count() > 4): ?>
                                     <div class="position-absolute top-0 start-0 w-100 h-100 bg-dark bg-opacity-75 d-flex align-items-center justify-content-center text-white fw-bold rounded-3">
                                         +<?= $items->count() - 3 ?>
                                     </div>

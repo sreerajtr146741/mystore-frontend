@@ -75,11 +75,15 @@ if (!function_exists('route')) {
             'checkout.process' => '/checkout/success',
             'checkout.proceed' => '/checkout/success',
             'checkout.success' => '/checkout/success', 
+            'checkout.update_qty' => '/checkout/update-qty?id=',
             'orders.index' => '/orders',
             'orders.show' => '/orders/show?id=',
             'login' => '/login',
             'register' => '/register',
             'logout' => '/?logout=1',
+            'orders.cancel' => '/orders/cancel?id=',
+            'orders.return' => '/orders/return?id=',
+            'orders.download' => '/orders/download?id=',
             'admin.users' => '/admin/users',
             'admin.users.update' => '/admin/users',
             'admin.users.destroy' => '/admin/users',
@@ -225,7 +229,27 @@ if ($uri === '/' || $uri === '/products' || $uri === '/index.php') {
 } elseif ($uri === '/about') {
     $viewName = 'pages.about';
 } elseif ($uri === '/contact') {
-    $viewName = 'pages.contact';
+    $viewName = 'contact'; // Changed from 'pages.contact' to correct path 'contact.php' in root/mystorefrontend
+    
+    if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+        $payload = [
+            'name' => trim(($_POST['first_name'] ?? '') . ' ' . ($_POST['last_name'] ?? '')),
+            'email' => $_POST['email'] ?? '',
+            'subject' => $_POST['subject'] ?? '',
+            'message' => $_POST['message'] ?? ''
+        ];
+        
+        // Call Backend API
+        $res = api_client('contact', 'POST', $payload);
+        
+        if ($res && (isset($res->status) && $res->status == true)) {
+            $_SESSION['success'] = $res->message ?? 'Message sent successfully!';
+            header("Location: /contact"); // PRG pattern
+            exit;
+        } else {
+             $data['errors']->add('contact', $res->message ?? 'Failed to send message. Please try again.');
+        }
+    }
 
 } elseif ($uri === '/checkout') {
     $viewName = 'checkout.index';
@@ -234,6 +258,38 @@ if ($uri === '/' || $uri === '/products' || $uri === '/index.php') {
 } elseif ($uri === '/checkout/success') {
     $viewName = 'checkout.success';
     $_SESSION['cart'] = []; 
+
+} elseif ($uri === '/checkout/update-qty') {
+    // AJAX Update Qty
+    if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+         $input = json_decode(file_get_contents('php://input'), true);
+         $id = $_GET['id'] ?? 0; // passed in URL
+         $qty = $input['qty'] ?? 1;
+         
+         if ($id && isset($_SESSION['cart'][$id])) {
+             if ($qty < 1) unset($_SESSION['cart'][$id]);
+             else $_SESSION['cart'][$id]['qty'] = $qty;
+             
+             // Recalculate Totals
+             $cart = $_SESSION['cart'];
+             $subtotal = 0;
+             foreach($cart as $item) $subtotal += ($item['price'] * $item['qty']);
+             
+             header('Content-Type: application/json');
+             echo json_encode([
+                 'success' => true,
+                 'totals' => [
+                     'subtotal' => $subtotal,
+                     'shipping' => 0,
+                     'platform_fee' => 0,
+                     'total' => $subtotal,
+                     'discount' => 0
+                 ]
+             ]);
+             exit;
+         }
+    }
+    exit;
 
 } elseif ($uri === '/checkout/proceed') {
     // Post Order logic
@@ -254,8 +310,33 @@ if ($uri === '/' || $uri === '/products' || $uri === '/index.php') {
 
 } elseif ($uri === '/orders') {
     $viewName = 'orders.index';
-    $apiRes = api_client('orders'); 
-    $data['orders'] = collect($apiRes->data ?? []);
+    $queryParams = http_build_query($_GET);
+    $apiRes = api_client("orders?$queryParams"); 
+    $data['orders'] = collect($apiRes->data ?? []); // Ensure using standard key
+    
+    // Manual Pagination Meta if API provides
+    if (!method_exists($data['orders'], 'hasMorePages')) {
+         $hasNext = isset($apiRes->next_page_url);
+         $nextUrl = $apiRes->next_page_url ?? null;
+         $total = $apiRes->total ?? count($data['orders']);
+         
+         $data['orders']->macro('hasMorePages', function() use ($hasNext){ return $hasNext; });
+         $data['orders']->macro('nextPageUrl', function() use ($nextUrl){ return $nextUrl; });
+         $data['orders']->macro('total', function() use ($total){ return $total; });
+    }
+
+    if (request()->ajax()) {
+        $orders = $data['orders']; // pass to view
+        ob_start();
+        include $views . '/mystorefrontend/orders/partials/card.php';
+        $html = ob_get_clean();
+        header('Content-Type: application/json');
+        echo json_encode([
+            'html' => $html,
+            'next_url' => $data['orders']->nextPageUrl()
+        ]);
+        exit;
+    }
     
 } elseif ($uri === '/verify-otp') {
     $viewName = 'auth.verify-register-otp'; // Use generic OTP view

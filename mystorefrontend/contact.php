@@ -1,8 +1,6 @@
-@extends('layouts.master')
-
-@section('title', 'Contact Us • MyStore')
-
-@section('content')
+<?php
+ob_start();
+?>
 <div class="container py-5">
     <div class="row g-5">
         <div class="col-lg-6">
@@ -48,58 +46,60 @@
                     <p class="text-muted small">We typically reply within 24 hours.</p>
                 </div>
                 <div class="card-body p-4">
-                    @if(session('success'))
+                    
+                    <?php if(isset($_SESSION['success'])): ?>
                         <div class="alert alert-success alert-dismissible fade show" role="alert">
-                            {{ session('success') }}
+                            <?= $_SESSION['success'] ?>
                             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                         </div>
-                    @endif
+                        <?php unset($_SESSION['success']); ?>
+                    <?php endif; ?>
 
-                    @if($errors->any())
+                    <?php if(isset($errors) && $errors->any()): ?>
                         <div class="alert alert-danger alert-dismissible fade show" role="alert">
                             <ul class="mb-0">
-                                @foreach($errors->all() as $error)
-                                    <li>{{ $error }}</li>
-                                @endforeach
+                                <?php foreach($errors->all() as $error): ?>
+                                    <li><?= $error ?></li>
+                                <?php endforeach; ?>
                             </ul>
                             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                         </div>
-                    @endif
+                    <?php endif; ?>
 
-                    <form action="{{ route('contact.store') }}" method="POST">
-                        @csrf
+                    <form action="/contact" method="POST">
+                        <?= csrf_field() ?>
                         <div class="row g-3">
                             <div class="col-md-6">
                                 <label class="form-label small fw-bold text-muted">First Name</label>
                                 <div class="input-group">
                                     <span class="input-group-text bg-light border-0"><i class="bi bi-person"></i></span>
-                                    <input type="text" name="first_name" class="form-control bg-light border-0 py-2" required placeholder="John" value="{{ old('first_name') }}">
+                                    <input type="text" name="first_name" class="form-control bg-light border-0 py-2" required placeholder="John" value="<?= htmlspecialchars($_POST['first_name'] ?? '') ?>">
                                 </div>
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label small fw-bold text-muted">Last Name</label>
                                 <div class="input-group">
                                     <span class="input-group-text bg-light border-0"><i class="bi bi-person"></i></span>
-                                    <input type="text" name="last_name" class="form-control bg-light border-0 py-2" required placeholder="Doe" value="{{ old('last_name') }}">
+                                    <input type="text" name="last_name" class="form-control bg-light border-0 py-2" required placeholder="Doe" value="<?= htmlspecialchars($_POST['last_name'] ?? '') ?>">
                                 </div>
                             </div>
                             <div class="col-12">
                                 <label class="form-label small fw-bold text-muted">Email Address</label>
                                 <div class="input-group">
                                     <span class="input-group-text bg-light border-0"><i class="bi bi-envelope"></i></span>
-                                    <input type="email" name="email" class="form-control bg-light border-0 py-2" required placeholder="john@example.com" value="{{ old('email') }}">
+                                    <input type="email" name="email" class="form-control bg-light border-0 py-2" required placeholder="john@example.com" value="<?= htmlspecialchars($_POST['email'] ?? '') ?>">
                                 </div>
                             </div>
                             <div class="col-12">
                                 <label class="form-label small fw-bold text-muted">Subject</label>
                                 <div class="input-group">
                                     <span class="input-group-text bg-light border-0"><i class="bi bi-chat-dots"></i></span>
-                                    <input type="text" name="subject" class="form-control bg-light border-0 py-2" required placeholder="Order #12345" value="{{ old('subject') }}">
+                                    <input type="text" name="subject" class="form-control bg-light border-0 py-2" required placeholder="Order #12345" value="<?= htmlspecialchars($_POST['subject'] ?? '') ?>">
                                 </div>
                             </div>
                             <div class="col-12">
                                 <label class="form-label small fw-bold text-muted">Message</label>
-                                <textarea name="message" class="form-control bg-light border-0 p-3" rows="5" required placeholder="How can we help you?">{{ old('message') }}</textarea>
+                                <textarea name="message" class="form-control bg-light border-0 p-3" rows="5" required placeholder="How can we help you?"><?= htmlspecialchars($_POST['message'] ?? '') ?></textarea>
                             </div>
                             <div class="col-12 mt-4">
                                 <button type="submit" class="btn btn-primary w-100 py-3 fw-bold rounded-pill shadow-sm hover-scale text-uppercase" style="letter-spacing: 0.5px;">
@@ -113,4 +113,8 @@
         </div>
     </div>
 </div>
-@endsection
+<?php
+$content = ob_get_clean();
+$title = 'Contact Us • MyStore';
+include __DIR__ . '/layouts/master.php';
+?>

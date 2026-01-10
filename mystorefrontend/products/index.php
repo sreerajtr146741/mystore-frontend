@@ -4,13 +4,22 @@ require_once __DIR__ . '/../../config.php';
 require_once __DIR__ . '/../../api.php';
 
 // Fetch products
-$response = callAPI("GET", "/products");
-$products = collect($response['data'] ?? []);
+$response = callAPI("GET", "products"); // Removed leading slash
+$products = $response['data'] ?? [];
 
-// Ensure compatibility with view pagination calls
-if (!method_exists($products, 'hasMorePages')) {
-    $products->macro('hasMorePages', function(){ return false;});
-    $products->macro('nextPageUrl', function(){ return '#';});
+// Helper class to mimic basic pagination if needed, or just handle as array
+// For now, we will treat $products as a simple array and handle pagination manually if provided by API
+$products_data = is_array($products) ? $products : [];
+// If the API returns pagination metadata, it usually wraps 'data'. 
+// If $response['data'] is the array, we are good.
+
+// Mocking the 'count' and 'hasMorePages' check for the view logic below
+$products_count = count($products_data);
+$hasMorePages = false; // Implement logic if API provides 'next_page_url'
+$nextPageUrl = '#'; 
+if (isset($response['next_page_url'])) {
+    $hasMorePages = true;
+    $nextPageUrl = $response['next_page_url'];
 }
 
 // 1. Capture Styles

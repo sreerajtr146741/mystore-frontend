@@ -1,36 +1,41 @@
-@extends('layouts.master')
+<?php
+// Product Detail Page (Plain PHP)
 
-@section('title', $product->name . ' • MyStore')
+// 1. Data Setup (Variables passed from Controller/Index)
+$p = $product ?? null;
+if (!$p) {
+    echo "Product not found.";
+    return;
+}
 
-@section('content')
-@php
-    use Illuminate\Support\Facades\Storage;
-    $p = $product;
-    
-    // Image Helper
-    $img = function($path){
-        if(!$path) return null;
-        if (filter_var($path, FILTER_VALIDATE_URL)) return $path;
-        if (Storage::disk('public')->exists($path)) return asset('storage/'.$path);
-        return asset('storage/'.$path); // fallback
-    };
-    
-    // Pricing
-    $final = $p->discounted_price ?? $p->final_price ?? $p->price;
-    $hasDisc = $final < $p->price;
-    $saveAmt = max(0, $p->price - $final);
-    $savePct = $p->price > 0 ? round(($saveAmt / $p->price) * 100) : 0;
-    
-    // Gallery Images (Main + Banners as gallery for now)
-    $gallery = collect();
-    if($p->image) $gallery->push($img($p->image));
+// Image Helper Logic (Local equivalent of Blade @php block)
+$img = function($path) {
+    if(!$path) return '/images/placeholder.png'; // Fallback
+    if (filter_var($path, FILTER_VALIDATE_URL)) return $path;
+    // Assuming 'storage' symlink exists and maps to backend storage
+    return '/storage/' . ltrim($path, '/');
+};
 
-    // If no images at all
-    if($gallery->isEmpty()) $gallery->push(asset('images/placeholder.png')); // simplified
-    
-    $mainImage = $gallery->first();
-@endphp
+// Pricing Logic
+$price = (float)($p->price ?? 0);
+$final = (float)($p->discounted_price ?? $p->final_price ?? $price);
+$hasDisc = $final < $price;
+$saveAmt = max(0, $price - $final);
+$savePct = $price > 0 ? round(($saveAmt / $price) * 100) : 0;
 
+// Gallery
+$gallery = [];
+if (!empty($p->image)) $gallery[] = $img($p->image);
+if (empty($gallery)) $gallery[] = '/images/placeholder.png';
+$mainImage = $gallery[0];
+
+// Similarity
+$simProducts = isset($similarProducts) ? (is_array($similarProducts) ? $similarProducts : $similarProducts->all()) : [];
+$randProducts = isset($randomProducts) ? (is_array($randomProducts) ? $randomProducts : $randomProducts->all()) : [];
+
+// 2. Capture Styles
+ob_start();
+?>
 <style>
     body { background-color: #f1f3f6; font-family: Roboto, Arial, sans-serif; }
     .product-container { background: #fff; padding: 16px; box-shadow: 0 1px 1px 0 rgba(0,0,0,.16); }
@@ -74,11 +79,6 @@
     
     .product-title { font-size: 18px; color: #212121; margin-bottom: 5px; }
     
-    .rating-badge { 
-        background-color: #388e3c; color: #fff; font-size: 12px; padding: 2px 6px; 
-        border-radius: 3px; font-weight: 500; display: inline-flex; align-items: center; vertical-align: middle; gap: 2px;
-    }
-    
     .price-block { display: flex; align-items: baseline; gap: 10px; margin: 10px 0; }
     .final-price { font-size: 28px; font-weight: 500; color: #212121; }
     .original-price { font-size: 16px; color: #878787; text-decoration: line-through; }
@@ -95,10 +95,6 @@
     .product-card-hover { transition: transform 0.2s, box-shadow 0.2s; cursor: pointer; }
     .product-card-hover:hover { transform: translateY(-3px); box-shadow: 0 4px 12px rgba(0,0,0,0.1); border-color: #2874f0 !important; }
     
-    .highlights-list { list-style: none; padding: 0; font-size: 14px; color: #212121; margin: 0; }
-    .highlights-list li { margin-bottom: 5px; display: flex; gap: 8px; }
-    .highlights-list li::before { content: "•"; color: #c2c2c2; }
-    
     .specs-table { width: 100%; border-collapse: collapse; font-size: 14px; }
     .specs-table td { padding: 8px 0; vertical-align: top; }
     .col-key { color: #878787; width: 33%; }
@@ -106,7 +102,8 @@
     .spec-cat-title { font-size: 18px; color: #000; margin-top: 20px; border-bottom: 1px solid #f0f0f0; padding-bottom: 10px; margin-bottom: 10px; }
     
     .desc-text { font-size: 14px; color: #212121; line-height: 1.5; white-space: pre-wrap; }
-    
+    .text-truncate { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
     /* Responsive */
     @media(max-width: 768px){
         .left-col { position: static; }
@@ -116,203 +113,180 @@
         .row-section { flex-direction: column; }
     }
 </style>
+<?php
+$styles = ob_get_clean();
 
+// 3. Capture Content
+ob_start();
+?>
 <div class="container-fluid mt-2 mb-4" style="max-width: 1400px;">
     <div class="product-container row g-0">
         
-        {{-- LEFT COLUMN: IMAGES & BUTTONS --}}
+        <!-- LEFT COLUMN: IMAGES & BUTTONS -->
         <div class="col-md-5 col-lg-4 p-3 left-col">
             <div class="position-relative">
                 <div class="gallery-wrapper">
-                    {{-- Thumbnails --}}
-                    @if($gallery->count() > 1)
+                    <!-- Thumbnails -->
+                    <?php if(count($gallery) > 1): ?>
                     <div class="thumbnails">
-                        @foreach($gallery as $i => $src)
-                            <div class="thumb-box {{ $loop->first ? 'active' : '' }}" onclick="changeImage('{{ $src }}', this)">
-                                <img src="{{ $src }}" alt="Thumb">
+                        <?php foreach($gallery as $i => $src): ?>
+                            <div class="thumb-box <?= $i===0 ? 'active':'' ?>" onclick="changeImage('<?= $src ?>', this)">
+                                <img src="<?= $src ?>" alt="Thumb">
                             </div>
-                        @endforeach
+                        <?php endforeach; ?>
                     </div>
-                    @endif
+                    <?php endif; ?>
                     
-                    {{-- Main Image --}}
+                    <!-- Main Image -->
                     <div class="main-image-box">
-                        {{-- Wishlist Icon removed --}}
-                        <img id="mainImage" src="{{ $mainImage }}" alt="{{ $p->name }}">
+                        <img id="mainImage" src="<?= $mainImage ?>" alt="<?= htmlspecialchars($p->name) ?>">
                     </div>
                 </div>
             
                 <div class="action-btns">
-                    @auth
-                        <form action="{{ route('cart.add', $p) }}" method="POST" class="flex-fill d-flex">
-                            @csrf
-                            <input type="hidden" name="qty" value="1">
+                    <?php if(auth()->check()): ?>
+                        <form action="<?= route('cart.add', ['id' => $p->id]) ?>" method="GET" class="flex-fill d-flexInput">
+                            <!-- Note: Using GET for cart add based on index.php route logic (Line 198) which expects GET -->
+                            <input type="hidden" name="action" value="add">
+                            <input type="hidden" name="id" value="<?= $p->id ?>">
                             <button class="btn btn-fk btn-cart flex-fill">
                                 <i class="bi bi-cart-fill"></i> ADD TO CART
                             </button>
                         </form>
-                        <form action="{{ route('checkout.single', $p->id) }}" method="GET" class="flex-fill d-flex">
-                            <input type="hidden" name="qty" value="1">
-                            <button class="btn btn-fk btn-buy flex-fill">
-                                <i class="bi bi-lightning-fill"></i> BUY NOW
-                            </button>
-                        </form>
-                    @else
-                        <a href="{{ route('login') }}" class="btn btn-fk btn-cart"><i class="bi bi-cart-fill"></i> ADD TO CART</a>
-                        <a href="{{ route('login') }}" class="btn btn-fk btn-buy"><i class="bi bi-lightning-fill"></i> BUY NOW</a>
-                    @endauth
+                        <a href="<?= route('checkout.index') ?>" class="btn btn-fk btn-buy flex-fill text-decoration-none">
+                            <i class="bi bi-lightning-fill"></i> BUY NOW
+                        </a>
+                    <?php else: ?>
+                        <a href="<?= route('login') ?>" class="btn btn-fk btn-cart text-decoration-none"><i class="bi bi-cart-fill"></i> ADD TO CART</a>
+                        <a href="<?= route('login') ?>" class="btn btn-fk btn-buy text-decoration-none"><i class="bi bi-lightning-fill"></i> BUY NOW</a>
+                    <?php endif; ?>
                 </div>
             </div>
         </div>
 
-        {{-- RIGHT COLUMN: DETAILS --}}
+        <!-- RIGHT COLUMN: DETAILS -->
         <div class="col-md-7 col-lg-8 p-3 ps-md-4">
             
-            {{-- Breadcrumb --}}
+            <!-- Breadcrumb -->
             <div class="breadcrumb">
-                <a href="{{ url('/') }}">Home</a> &nbsp;›&nbsp; 
-                <a href="{{ route('products.index') }}">Products</a> &nbsp;›&nbsp; 
-                @if($p->category) <a href="{{ route('products.index', ['category'=>$p->category]) }}">{{ $p->category }}</a> &nbsp;›&nbsp; @endif
-                <span>{{ $p->name }}</span>
+                <a href="<?= url('/') ?>">Home</a> &nbsp;›&nbsp; 
+                <a href="<?= route('products.index') ?>">Products</a> &nbsp;›&nbsp; 
+                <?php if(!empty($p->category)): ?>
+                    <a href="<?= route('products.index', ['category'=>$p->category]) ?>"><?= htmlspecialchars($p->category) ?></a> &nbsp;›&nbsp; 
+                <?php endif; ?>
+                <span><?= htmlspecialchars($p->name) ?></span>
             </div>
 
-            <h1 class="product-title fw-normal">{{ $p->name }}</h1>
+            <h1 class="product-title fw-normal"><?= htmlspecialchars($p->name) ?></h1>
             
-            {{-- Rating removed as per request --}}
-            {{-- <div class="d-flex align-items-center gap-2 mb-2">
-                <div class="rating-badge">
-                    4.6 <i class="bi bi-star-fill" style="font-size: 10px;"></i>
-                </div>
-                <span class="text-secondary fw-medium" style="font-size: 14px; color: #878787;">11 Ratings & 0 Reviews</span>
-            </div> --}}
-
             <div class="price-block">
-                <span class="final-price">₹{{ number_format($final, 0) }}</span>
-                @if($hasDisc)
-                    <span class="original-price">₹{{ number_format($p->price, 0) }}</span>
-                    <span class="discount-pct">{{ $savePct }}% off</span>
-                @endif
+                <span class="final-price">₹<?= number_format($final, 0) ?></span>
+                <?php if($hasDisc): ?>
+                    <span class="original-price">₹<?= number_format($price, 0) ?></span>
+                    <span class="discount-pct"><?= $savePct ?>% off</span>
+                <?php endif; ?>
             </div>
 
-            {{-- Offers --}}
+            <!-- Offers -->
             <div class="mb-3">
                 <div class="fw-bold fs-6 mb-2">Available offers</div>
                 <ul class="offers-list">
                     <li><i class="bi bi-tag-fill tag-icon"></i> <span><strong>Bank Offer</strong> 5% Unlimited Cashback on Axis Bank Credit Card</span></li>
                     <li><i class="bi bi-tag-fill tag-icon"></i> <span><strong>Bank Offer</strong> 10% off on SBI Credit Card, up to ₹1,500. On orders of ₹5,000</span></li>
-                    <li><i class="bi bi-tag-fill tag-icon"></i> <span><strong>Partner Offer</strong> Sign up for Pay Later and get Gift Card worth up to ₹500*</span></li>
                 </ul>
             </div>
 
-            {{-- Delivery --}}
+            <!-- Delivery -->
             <div class="row-section">
                 <div class="section-head text-secondary">Delivery</div>
                 <div class="row-content">
-                    <div class="fw-medium mb-1">Delivery by {{ now()->addDays(4)->format('d M, l') }} <span class="text-secondary">|</span> <span class="text-success">Free</span></div>
-                    <div class="small text-secondary">
-                         if ordered before {{ now()->addHours(5)->format('h:i A') }}
-                    </div>
+                    <div class="fw-medium mb-1">Standard Delivery <span class="text-secondary">|</span> <span class="text-success">Free</span></div>
                 </div>
             </div>
 
-
-
-            {{-- Description --}}
-            @if($p->description)
+            <!-- Description -->
+            <?php if(!empty($p->description)): ?>
             <div class="mt-4 border p-3 rounded">
                 <div class="fs-5 fw-bold mb-3">Description</div>
-                <div class="desc-text text-secondary">{{ $p->description }}</div>
+                <div class="desc-text text-secondary"><?= htmlspecialchars($p->description) ?></div>
             </div>
-            @endif
+            <?php endif; ?>
 
-            {{-- Specifications --}}
-            @if(!empty($p->specifications))
+            <!-- Specifications -->
+            <?php if(!empty($p->specifications)): ?>
             <div class="mt-4 border rounded p-3">
                 <div class="fs-5 fw-bold mb-3">Specifications</div>
+                <?php
+                    // Adjust spec handling if it's an array or object
+                    $specs = $p->specifications;
+                    if (is_string($specs)) $specs = json_decode($specs, true);
+                    // If simple key-value, wrap in 'General'
+                    if (is_array($specs) && !isset($specs[0]['key']) && !isset($specs['General'])) {
+                         $specs = ['General' => $specs];
+                    }
+                ?>
                 
-                @foreach($p->specifications as $cat => $items)
+                <?php foreach($specs as $cat => $items): ?>
                     <div class="mb-3">
-                        <div class="spec-cat-title fs-6">{{ $cat }}</div>
+                        <div class="spec-cat-title fs-6"><?= htmlspecialchars(is_string($cat) ? $cat : 'General') ?></div>
                         <table class="specs-table">
-                            @foreach($items as $spec)
+                            <?php if(is_array($items)): foreach($items as $k => $v): ?>
+                                <?php 
+                                    $key = is_array($v) ? ($v['key'] ?? $k) : $k;
+                                    $val = is_array($v) ? ($v['value'] ?? '') : $v;
+                                ?>
                                 <tr>
-                                    <td class="col-key">{{ $spec['key'] }}</td>
-                                    <td class="col-val">{{ $spec['value'] }}</td>
+                                    <td class="col-key"><?= htmlspecialchars($key) ?></td>
+                                    <td class="col-val"><?= htmlspecialchars($val) ?></td>
                                 </tr>
-                            @endforeach
+                            <?php endforeach; endif; ?>
                         </table>
                     </div>
-                @endforeach
+                <?php endforeach; ?>
             </div>
-            @endif
+            <?php endif; ?>
 
         </div>
     </div>
     
-    {{-- Similar Products --}}
-    @if(isset($similarProducts) && $similarProducts->count() > 0)
+    <!-- Similar Products -->
+    <?php if(!empty($simProducts)): ?>
         <div class="card mt-2 border-0 shadow-sm p-3">
             <h5 class="fw-bold mb-3">Similar Products</h5>
             <div class="row g-3">
-            @foreach($similarProducts as $sp)
+            <?php foreach($simProducts as $sp): ?>
+                <?php $spObj = is_array($sp) ? (object)$sp : $sp; ?>
                 <div class="col-6 col-md-3">
                      <div class="p-2 border rounded text-center h-100 product-card-hover d-flex flex-column">
-                         <a href="{{ route('products.show', $sp->id) }}" class="text-decoration-none text-dark flex-grow-1">
-                             <img src="{{ $img($sp->image) }}" class="img-fluid mb-2" style="max-height: 150px; object-fit: contain;">
-                             <div class="text-truncate fw-medium">{{ $sp->name }}</div>
-                             <div class="text-success fw-bold">₹{{ number_format($sp->final_price ?? $sp->price, 0) }}</div>
+                         <a href="<?= route('product.show', ['id'=>$spObj->id]) ?>" class="text-decoration-none text-dark flex-grow-1">
+                             <img src="<?= $img($spObj->image) ?>" class="img-fluid mb-2" style="max-height: 150px; object-fit: contain;">
+                             <div class="text-truncate fw-medium"><?= htmlspecialchars($spObj->name) ?></div>
+                             <div class="text-success fw-bold">₹<?= number_format($spObj->final_price ?? $spObj->price, 0) ?></div>
                          </a>
-                         <div class="d-flex gap-1 mt-2 pt-2 border-top">
-                             <form action="{{ route('cart.add', $sp->id) }}" method="POST" class="flex-fill">
-                                 @csrf
-                                 <input type="hidden" name="qty" value="1">
-                                 <button class="btn btn-sm btn-warning w-100 text-white px-1" style="font-size: 0.75rem; white-space: nowrap;">Add to Cart</button>
-                             </form>
-                             <a href="{{ route('checkout.single', $sp->id) }}" class="btn btn-sm btn-danger flex-fill px-1" style="background:#fb641b; border:none; font-size: 0.75rem; white-space: nowrap;">Buy Now</a>
-                         </div>
                      </div>
                 </div>
-            @endforeach
+            <?php endforeach; ?>
             </div>
         </div>
-    @endif
+    <?php endif; ?>
 
-    {{-- Random Products --}}
-    @if(isset($randomProducts) && $randomProducts->count() > 0)
-        <div class="card mt-2 border-0 shadow-sm p-3">
-            <h5 class="fw-bold mb-3">You May Also Like</h5>
-            <div class="row g-3">
-            @foreach($randomProducts as $rp)
-                <div class="col-6 col-md-3">
-                     <div class="p-2 border rounded text-center h-100 product-card-hover d-flex flex-column">
-                         <a href="{{ route('products.show', $rp->id) }}" class="text-decoration-none text-dark flex-grow-1">
-                             <img src="{{ $img($rp->image) }}" class="img-fluid mb-2" style="max-height: 150px; object-fit: contain;">
-                             <div class="text-truncate fw-medium">{{ $rp->name }}</div>
-                             <div class="text-success fw-bold">₹{{ number_format($rp->final_price ?? $rp->price, 0) }}</div>
-                         </a>
-                         <div class="d-flex gap-1 mt-2 pt-2 border-top">
-                             <form action="{{ route('cart.add', $rp->id) }}" method="POST" class="flex-fill">
-                                 @csrf
-                                 <input type="hidden" name="qty" value="1">
-                                 <button class="btn btn-sm btn-warning w-100 text-white px-1" style="font-size: 0.75rem; white-space: nowrap;">Add to Cart</button>
-                             </form>
-                             <a href="{{ route('checkout.single', $rp->id) }}" class="btn btn-sm btn-danger flex-fill px-1" style="background:#fb641b; border:none; font-size: 0.75rem; white-space: nowrap;">Buy Now</a>
-                         </div>
-                     </div>
-                </div>
-            @endforeach
-            </div>
-        </div>
-    @endif
 </div>
-@endsection
+<?php
+$content = ob_get_clean();
 
-@push('scripts')
+// 4. Client Scripts
+ob_start();
+?>
 <script>
     function changeImage(src, el) {
         document.getElementById('mainImage').src = src;
-        document.querySelectorAll('.thumb-box').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.thumb-box').forEach(function(b){ b.classList.remove('active') });
         el.classList.add('active');
     }
 </script>
-@endpush
+<?php
+$scripts = ob_get_clean();
+
+$title = htmlspecialchars($p->name ?? 'Product') . ' • MyStore';
+include __DIR__ . '/../layouts/master.php';
+?>
