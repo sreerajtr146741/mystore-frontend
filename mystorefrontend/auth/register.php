@@ -77,20 +77,20 @@
                             <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-indigo-600" viewBox="0 0 24 24" fill="currentColor">
                                 <path d="M12 12a5 5 0 100-10 5 5 0 000 10z"/><path d="M4 20a8 8 0 0116 0H4z" opacity=".6"/>
                             </svg>
-                            <input type="text" name="first_name" placeholder="First Name" required
+                            <input type="text" name="firstname" placeholder="First Name" required
                                    class="field w-full p-3.5 rounded-xl border">
-                            <?php if($errors->has('first_name')): ?>
-                                <span class="text-red-500 text-xs mt-1 block"><?= $errors->first('first_name') ?></span>
+                            <?php if($errors->has('firstname')): ?>
+                                <span class="text-red-500 text-xs mt-1 block"><?= $errors->first('firstname') ?></span>
                             <?php endif; ?>
                         </div>
                         <div class="input-wrap">
                             <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-indigo-600" viewBox="0 0 24 24" fill="currentColor">
                                 <path d="M12 12a5 5 0 100-10 5 5 0 000 10z"/><path d="M4 20a8 8 0 0116 0H4z" opacity=".6"/>
                             </svg>
-                            <input type="text" name="last_name" placeholder="Last Name" required
+                            <input type="text" name="lastname" placeholder="Last Name" required
                                    class="field w-full p-3.5 rounded-xl border">
-                            <?php if($errors->has('last_name')): ?>
-                                <span class="text-red-500 text-xs mt-1 block"><?= $errors->first('last_name') ?></span>
+                            <?php if($errors->has('lastname')): ?>
+                                <span class="text-red-500 text-xs mt-1 block"><?= $errors->first('lastname') ?></span>
                             <?php endif; ?>
                         </div>
                     </div>
@@ -110,10 +110,10 @@
                         <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-indigo-600" viewBox="0 0 24 24" fill="currentColor">
                             <path d="M6.62 10.79a15.2 15.2 0 016.59 6.59l2.2-2.2a1 1 0 011.11-.22 11.11 11.11 0 004.66.94 1 1 0 011 1v3.5a1 1 0 01-1 1C9.89 21.52 3 15.37 3 8a1 1 0 011-1h3.5a1 1 0 011 1c0 1.56.33 3.06.94 4.66a1 1 0 01-.22 1.11l-2.2 2.2z"/>
                         </svg>
-                        <input type="text" name="phone" placeholder="Phone Number" required
+                        <input type="text" name="phoneno" placeholder="Phone Number" required
                                class="field w-full p-3.5 rounded-xl border">
-                        <?php if($errors->has('phone')): ?>
-                            <span class="text-red-500 text-xs mt-1 block"><?= $errors->first('phone') ?></span>
+                        <?php if($errors->has('phoneno')): ?>
+                            <span class="text-red-500 text-xs mt-1 block"><?= $errors->first('phoneno') ?></span>
                         <?php endif; ?>
                     </div>
 

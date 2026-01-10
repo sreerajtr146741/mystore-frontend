@@ -258,93 +258,115 @@ if ($uri === '/' || $uri === '/products' || $uri === '/index.php') {
     $data['orders'] = collect($apiRes->data ?? []);
     
 } elseif ($uri === '/verify-otp') {
-    $viewName = 'auth.verify-register-otp';
+    $viewName = 'auth.verify-register-otp'; // Use generic OTP view
     $data['email'] = $_SESSION['register_email'] ?? 'your email';
+    $type = $_GET['type'] ?? $_SESSION['otp_type'] ?? 'register';
 
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $otp = $_POST['otp'] ?? '';
         $email = $_SESSION['register_email'] ?? '';
         
-        $res = api_client('verify-otp', 'POST', ['email' => $email, 'otp' => $otp]);
-        
-        if ($res && isset($res->token)) {
-             $_SESSION['api_token'] = $res->token;
-             $_SESSION['user'] = $res->user;
-             unset($_SESSION['register_email']); 
-             header("Location: /"); exit;
+        if ($type === 'password') {
+             // Verify Password OTP
+             $res = api_client('auth/verify-password-otp', 'POST', ['email' => $email, 'otp' => $otp]);
+             $token = $res->data->reset_token ?? null;
+             
+             if ($token) {
+                 $_SESSION['reset_token'] = $token;
+                 header("Location: /reset-password"); exit;
+             } else {
+                 $data['errors']->add('otp', $res->message ?? 'Invalid OTP');
+             }
+
         } else {
-             $data['errors']->add('otp', $res->message ?? 'Invalid OTP (Mock: 123456)');
-             // Fallback for mock environment
-             if ($otp === '123456') {
-                 $_SESSION['user'] = (object)['id'=>1, 'name'=>'User', 'email'=>$email, 'role'=>'buyer']; 
+             // Verify Register OTP
+             $res = api_client('auth/verify-register', 'POST', ['email' => $email, 'otp' => $otp]);
+             $token = $res->token ?? $res->data->token ?? null;
+             $user = $res->user ?? $res->data->user ?? null;
+             
+             if ($token) {
+                 $_SESSION['api_token'] = $token;
+                 $_SESSION['user'] = $user;
+                 unset($_SESSION['register_email']); 
                  header("Location: /"); exit;
+             } else {
+                 $data['errors']->add('otp', $res->message ?? 'Invalid OTP');
              }
         }
     }
 
 } elseif ($uri === '/resend-otp') {
-    if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-        $email = $_SESSION['register_email'] ?? '';
-        api_client('resend-otp', 'POST', ['email' => $email]);
-        $_SESSION['status'] = 'OTP Resent!';
-        header("Location: /verify-otp"); exit;
+    $type = $_GET['type'] ?? $_SESSION['otp_type'] ?? 'register';
+    $email = $_SESSION['register_email'] ?? '';
+    
+    if ($type === 'password') {
+         api_client('auth/forgot-password', 'POST', ['email' => $email]); // Re-trigger forgot pw email
+    } else {
+         api_client('auth/resend-register-otp', 'POST', ['email' => $email]);
     }
+    $_SESSION['status'] = 'OTP Resent!';
+    header("Location: /verify-otp?type=$type"); exit;
 
 } elseif ($uri === '/forgot-password') {
     $viewName = 'auth.forgot-password';
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $email = $_POST['email'] ?? '';
-        // Call API endpoint for forgot password
-        $res = api_client('forgot-password', 'POST', ['email' => $email]);
+        $res = api_client('auth/forgot-password', 'POST', ['email' => $email]);
         
         if ($res && isset($res->status) && $res->status == true) {
-            $_SESSION['status'] = $res->message ?? 'Reset code sent if email exists.';
-             // If API returns a token or just success, maybe redirect to reset page or stay here?
-             // Usually flow is -> Send Email -> Enter OTP -> Enter New Password.
-             // Assuming flow redirects to verify-otp-password or similar.
-             // For now, let's assume it stays here with success message or redirects to an OTP page.
-             // If the backend sends an OTP, we might need to redirect to a reset-password page.
-             
-             // Check if API response indicates next step.
-             // For this simple implementation, let's assume we redirect to a reset password page 
-             // where user enters email + OTP + new password.
-             $_SESSION['reset_email'] = $email;
-             header("Location: /reset-password"); exit;
+             $_SESSION['register_email'] = $email; // Reuse this key or create 'otp_email'
+             $_SESSION['otp_type'] = 'password';
+             $_SESSION['status'] = $res->message ?? 'OTP sent to email.';
+             header("Location: /verify-otp?type=password"); exit;
         } else {
              $data['errors']->add('email', $res->message ?? 'Unable to send reset link.');
         }
     }
 
 } elseif ($uri === '/reset-password') {
-    // Handling the actual reset page (Email + OTP + New Password)
     $viewName = 'auth.reset-password';
-    $data['email'] = $_SESSION['reset_email'] ?? '';
+    $data['email'] = $_SESSION['register_email'] ?? '';
     
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $payload = [
-            'email' => $_POST['email'],
-            'otp' => $_POST['otp'],
             'password' => $_POST['password'],
             'password_confirmation' => $_POST['password_confirmation']
         ];
-        $res = api_client('reset-password', 'POST', $payload);
         
-        if ($res && isset($res->status) && $res->status == true) {
+        // MANUALLY inject the RESET TOKEN for this request
+        // api_client helper uses $_SESSION['api_token'] by default. 
+        // We will temporarily swap it or overload the headers if possible.
+        // For now, simpler to swap:
+        $originalToken = $_SESSION['api_token'] ?? null;
+        $_SESSION['api_token'] = $_SESSION['reset_token'] ?? null;
+        
+        $res = api_client('auth/reset-password', 'POST', $payload);
+        
+        // Restore original logic (though user likely isn't logged in)
+        if ($originalToken) $_SESSION['api_token'] = $originalToken;
+        else unset($_SESSION['api_token']);
+
+        if ($res && (isset($res->status) && $res->status == true)) {
             $_SESSION['success'] = 'Password reset successfully! Please login.';
+            unset($_SESSION['reset_token']);
             header("Location: /login"); exit;
         } else {
-             $data['errors']->add('reset', $res->message ?? 'Invalid OTP or Password mismatch.');
-             $data['email'] = $_POST['email']; // Keep email
+             $data['errors']->add('reset', $res->message ?? 'Password mismatch or invalid token.');
         }
     }
 
 } elseif ($uri === '/login') {
     $viewName = 'auth.login';
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-        $res = api_client('login', 'POST', $_POST);
-        if ($res && (isset($res->token) || isset($res->access_token))) {
-            $_SESSION['api_token'] = $res->token ?? $res->access_token;
-            $_SESSION['user'] = $res->user ?? (object)['name'=>'User', 'email'=>$_POST['email']];
+        $res = api_client('auth/login', 'POST', $_POST); // Updated path
+        
+        // Extract Token & User identifying nested 'data' structure
+        $token = $res->token ?? $res->access_token ?? $res->data->token ?? null;
+        $user  = $res->user ?? $res->data->user ?? null;
+
+        if ($token) {
+            $_SESSION['api_token'] = $token;
+            $_SESSION['user'] = $user ?? (object)['name'=>'User', 'email'=>$_POST['email']];
             
             // Redirect based on Role
             $role = $_SESSION['user']->role ?? 'buyer';
@@ -355,32 +377,43 @@ if ($uri === '/' || $uri === '/products' || $uri === '/index.php') {
             }
             exit;
         } else {
-             $data['errors']->add('login', 'Invalid credentials');
+             $msg = $res->message ?? 'Invalid credentials';
+             $data['errors']->add('login', $msg);
         }
     }
 
 } elseif ($uri === '/register') {
     $viewName = 'auth.register';
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-        $res = api_client('register', 'POST', $_POST);
+        $res = api_client('auth/register', 'POST', $_POST); // Updated path
+        
+        // Usually register -> OTP. 
+        // Backend returns "Registration successful. OTP sent..."
+        // Status implies success.
         
         if ($res && (isset($res->status) && $res->status == true)) {
              $_SESSION['register_email'] = $_POST['email'];
-             if (isset($res->token)) {
-                 $_SESSION['api_token'] = $res->token;
-                 $_SESSION['user'] = $res->user;
+             $_SESSION['otp_type'] = 'register';
+             
+             // Check if backend auto-logins (rare given OTP flow)
+             if (isset($res->data->token)) {
+                 $_SESSION['api_token'] = $res->data->token;
+                 $_SESSION['user'] = $res->data->user;
                  header("Location: /"); exit;
-             } else {
-                 header("Location: /verify-otp"); exit;
              }
-        } elseif ($res && isset($res->token)) {
-             $_SESSION['api_token'] = $res->token;
-             $_SESSION['user'] = $res->user;
-             header("Location: /"); exit;
+             
+             header("Location: /verify-otp"); exit;
         } else {
-            // Mock fallback
-            $_SESSION['register_email'] = $_POST['email'];
-            header("Location: /verify-otp"); exit;
+            // Error handling
+            $msg = $res->message ?? 'Registration failed.';
+            if (isset($res->errors)) {
+                // Formatting Laravel errors
+                // "errors": {"email": ["Msg"]}
+                // Our simple ViewErrorBag likely takes string.
+                // We'll just take the first error for simplicity or the message.
+            }
+            $data['errors']->add('register', $msg);
+            $_SESSION['register_email'] = $_POST['email']; 
         }
     }
 
@@ -413,53 +446,43 @@ if ($uri === '/' || $uri === '/products' || $uri === '/index.php') {
          $res = api_client('admin/messages');
          $data['messages'] = collect($res->data ?? []);
     } else {
-        $viewName = 'admin.dashboard';
         
-        // Fetch fresh data for stats
-        $usersRes = api_client('admin/users');
-        $prodsRes = api_client('products');
-        $ordersRes = api_client('admin/orders'); // Requires Auth
-        $msgsRes = api_client('admin/messages');
+        // Use dedicated Admin Dashboard Endpoint
+        $dashRes = api_client('admin/dashboard');
         
-        $users = collect($usersRes->data ?? []);
-        $products = collect($prodsRes->data ?? []);
-        $orders = collect($ordersRes->data ?? []);
-        $messages = collect($msgsRes->data ?? []);
+        if ($dashRes && isset($dashRes->data)) {
+            $d = $dashRes->data;
+            // Map API response to View variables
+            $data['stats'] = [
+                'total_users' => $d->total_users ?? 0,
+                'total_products' => $d->total_products ?? 0,
+                'total_revenue' => $d->total_revenue ?? 0,
+                'new_today' => $d->new_products_count ?? 0, // Adjust key based on likely response or generic
+                'suspended_users' => 0 // Fallback if not in dash API
+            ];
+            
+            // Pass entire data object for flexibility in view
+            $data['dashboard'] = $d;
+        } else {
+            // Fallback Manual Fetch if Dashboard API fails/doesn't exist yet
+            $usersRes = api_client('admin/users');
+            $prodsRes = api_client('products');
+            $ordersRes = api_client('admin/orders');
+            
+            $users = collect($usersRes->data ?? []);
+            $products = collect($prodsRes->data ?? []);
+            $orders = collect($ordersRes->data ?? []);
+            
+            $data['stats'] = [
+                'total_users' => $users->count(),
+                'total_products' => $products->count(),
+                'total_revenue' => $orders->where('status', '!=', 'cancelled')->sum('total'),
+                'new_today' => 0,
+            ];
+        }
         
-        // Calculate Stats
-        $totalRevenue = $orders->where('status', '!=', 'cancelled')->sum('total');
-        $pendingOrders = $orders->where('status', 'pending')->count();
-        $pendingMessages = $messages->count(); // Assuming all fetched are relevant or add filtered check
-        
-        $data['stats'] = [
-            'total_users' => $users->count(),
-            'total_products' => $products->count(),
-            'new_today' => $products->where('created_at', '>=', date('Y-m-d'))->count(),
-            'total_revenue' => $totalRevenue,
-            'suspended_users' => $users->where('status', 'suspended')->count(),
-            'blocked_users' => $users->where('status', 'blocked')->count()
-        ];
-        
-        $data['userStats'] = [
-            'buyers' => $users->where('role', 'buyer')->count(),
-            'sellers' => $users->where('role', 'seller')->count(),
-            'admins' => $users->where('role', 'admin')->count(),
-            'new_today' => $users->where('created_at', '>=', date('Y-m-d'))->count(),
-            'active_30d' => $users->count() // Mock active metric for now
-        ];
-        
-        $data['adminExtras'] = [
-            'pending_orders' => $pendingOrders,
-            'pending_messages' => $pendingMessages
-        ];
-        
-        // Revenue Chart Mock Data (or calculate if orders have dates)
-        $data['revenue'] = ['growth' => '+10%'];
-        $data['monthlyRevenue'] = [
-            ['month'=>'Jan', 'revenue'=>5000],
-            ['month'=>'Feb', 'revenue'=>7000], 
-            // In a real app, group $orders by month
-        ];
+        $data['userStats'] = ['buyers' => 0, 'active_30d' => 0]; // Placeholders
+        $data['adminExtras'] = ['pending_orders' => 0, 'pending_messages' => 0];
     }
 }
 

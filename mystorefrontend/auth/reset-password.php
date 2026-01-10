@@ -37,12 +37,7 @@
             <?= csrf_field() ?>
             <input type="hidden" name="email" value="<?= htmlspecialchars($email ?? '') ?>">
             
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">OTP Code</label>
-                <input type="text" name="otp" required
-                    class="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none"
-                    placeholder="123456">
-            </div>
+            <!-- OTP code is now verified in the previous step -->
 
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">New Password</label>

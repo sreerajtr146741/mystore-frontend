@@ -9,14 +9,20 @@
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-gradient-to-br from-indigo-600 to-purple-700 min-h-screen flex items-center justify-center p-4">
+    <?php $type = $type ?? 'register'; ?>
     <div class="bg-white rounded-3xl shadow-2xl p-10 max-w-md w-full text-center">
-        <h1 class="text-4xl font-bold text-gray-800 mb-4">Check Your Email</h1>
+        <?php if($type === 'password'): ?>
+            <h1 class="text-3xl font-bold text-gray-800 mb-4">Reset Password</h1>
+        <?php else: ?>
+            <h1 class="text-4xl font-bold text-gray-800 mb-4">Check Your Email</h1>
+        <?php endif; ?>
+        
         <p class="text-gray-600 mb-8">
             We sent a <strong>6-digit OTP</strong> to<br>
             <span class="text-indigo-600 font-bold"><?= htmlspecialchars($email ?? 'your email') ?></span>
         </p>
 
-        <form action="/verify-otp" method="POST" class="space-y-6">
+        <form action="/verify-otp?type=<?= $type ?>" method="POST" class="space-y-6">
             <?= csrf_field() ?>
             <input type="hidden" name="email" value="<?= htmlspecialchars($email ?? '') ?>">
             <input type="text" name="otp" maxlength="6" required autofocus
@@ -28,7 +34,7 @@
             <?php endif; ?>
 
             <button type="submit" class="w-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-bold text-xl py-5 rounded-2xl hover:shadow-xl transition">
-                Verify & Complete Registration
+                <?= $type === 'password' ? 'Verify Code' : 'Verify & Complete Registration' ?>
             </button>
         </form>
 
@@ -39,7 +45,7 @@
         <?php endif; ?>
 
         <div class="mt-6">
-            <form action="/resend-otp" method="POST" class="inline">
+            <form action="/resend-otp?type=<?= $type ?>" method="POST" class="inline">
                 <?= csrf_field() ?>
                 <p class="text-gray-500">
                     Didn't receive the code? 
